@@ -1,0 +1,47 @@
+My-Chat-LangChain/.streamlit/secrets.toml
+
+
+# Jupyter Notebook Files
+.ipynb_checkpoints/
+*.ipynb_checkpoints/
+*.nbconvert.json
+.jupyter/
+
+# Python specific files
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+venv/
+env/
+.venv/
+.env/
+*.log
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# Data and output files (adjust as needed for your specific workflow)
+# 如果你的 Jupyter Notebook 会生成大量数据文件或输出结果，
+# 并且你不希望它们被版本控制，可以将它们添加到这里。
+# 例如：
+# *.csv
+# *.json
+# *.pkl
+# *.hdf5
+# *.npy
+# *.txt
+# /data/
+# /output/
+# /results/
+
+# IDE and Editor files (if you use IDEs within this folder)
+.idea/
+.vscode/
+*.iml
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+Desktop.ini
