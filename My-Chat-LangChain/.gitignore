@@ -1,0 +1,48 @@
+# Python
+__pycache__/
+*.pyc
+*.pyd
+*.pyo
+.Python/
+build/
+develop-eggs/
+dist/
+eggs/
+*.egg-info/
+.installed.cfg
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Streamlit
+.streamlit/cache/
+.streamlit/server_state.json
+.streamlit/secrets.toml # ⚠️ IMPORTANT: Keep your API keys out of version control!
+
+# IDE and Editor files
+.idea/                  # PyCharm
+.vscode/                # VS Code
+*.iml                   # IntelliJ IDEA (general)
+.project
+.settings
+.classpath
+
+# Operating System Files
+.DS_Store               # macOS
+Thumbs.db               # Windows
+Desktop.ini             # Windows
+
+# Jupyter Notebook files
+.ipynb_checkpoints/

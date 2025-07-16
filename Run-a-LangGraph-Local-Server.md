@@ -220,7 +220,7 @@ LangGraph Studio 是一个专门的 UI，您可以连接到 LangGraph API 服务
 
 
 
-![image-20250716000824480](A:%5Cstudy%5CPython%5Cjupyter%5CLangChain%5Cmedia%5Cimage-20250716000824480.png)
+![image-20250716000824480](media/image-20250716000824480.png)
 
 ### 7. 测试 API
 
