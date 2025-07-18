@@ -282,22 +282,22 @@ if st.session_state.retriever is None:
 if st.session_state.retrieval_chain is None and st.session_state.retriever:
     st.session_state.retrieval_chain = get_retrieval_chain(st.session_state.retriever)
 
-# 预设问题按钮
-st.markdown("<div style='display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;'>", unsafe_allow_html=True)
-suggested_questions = [
-    "如何使用RecursiveUrlLoader加载网页内容？",
-    "如何定义我的LangGraph图的状态模式？",
-    "如何使用Ollama在本地运行模型？",
-    "解释RAG技术以及LangGraph如何实现它们。",
-]
-for q in suggested_questions:
-    if st.button(q):
-        st.session_state.messages.append({"role": "user", "content": q})
-        with st.spinner("正在思考..."):
-            response = answer_question(st.session_state.retrieval_chain, q)
-            st.session_state.messages.append({"role": "ai", "content": response})
-        st.rerun() # 重新运行以显示新消息
-st.markdown("</div>", unsafe_allow_html=True)
+# # 预设问题按钮
+# st.markdown("<div style='display: flex; flex-wrap: wrap; justify-content: center; margin-bottom: 20px;'>", unsafe_allow_html=True)
+# suggested_questions = [
+#     "如何使用RecursiveUrlLoader加载网页内容？",
+#     "如何定义我的LangGraph图的状态模式？",
+#     "如何使用Ollama在本地运行模型？",
+#     "解释RAG技术以及LangGraph如何实现它们。",
+# ]
+# for q in suggested_questions:
+#     if st.button(q):
+#         st.session_state.messages.append({"role": "user", "content": q})
+#         with st.spinner("正在思考..."):
+#             response = answer_question(st.session_state.retrieval_chain, q)
+#             st.session_state.messages.append({"role": "ai", "content": response})
+#         st.rerun() # 重新运行以显示新消息
+# st.markdown("</div>", unsafe_allow_html=True)
 
 
 # 显示聊天历史
