@@ -45,3 +45,7 @@ env/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+
+# 忽略 Chroma DB 文件夹
+chroma_langchain_db/
