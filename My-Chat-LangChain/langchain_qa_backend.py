@@ -1,6 +1,13 @@
 # langchain_qa_backend.py
 import os
 import streamlit as st
+
+import asyncio
+# 导入 asyncio 模块
+# 分析了你遇到的 RuntimeError: There is no current event loop in thread 错误。
+# 这个错误是因为 Google 的 AI SDK 内部需要一个 asyncio 事件循环来处理异步操作，但是 Streamlit 在其工作线程中默认不会创建和设置这样一个循环。
+# 要解决这个问题，我们只需要在初始化 GoogleGenerativeAIEmbeddings 之前，为当前线程手动创建一个事件循环。
+
 # 导入 SitemapLoader
 from langchain_community.document_loaders import SitemapLoader
 # 导入用于解析URL的库
@@ -11,6 +18,10 @@ from langchain_core.messages import HumanMessage, AIMessage
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_core.vectorstores import InMemoryVectorStore
+
+from langchain_chroma import Chroma
+# 使用Chroma作为向量存储
+
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.chains.combine_documents import create_stuff_documents_chain
 from langchain.chains import create_retrieval_chain
@@ -98,12 +109,51 @@ def load_and_process_documents(url: str):
         st.info(f"文档分割成 {len(all_splits)} 个块。")
 
         # 3. 初始化嵌入模型
+
+        # 解决在 Streamlit 线程中运行 asyncio 代码的问题
+        # Google Generative AI SDK 内部使用 asyncio，而 Streamlit 在单独的线程中运行脚本
+        # 这会导致 "no current event loop in thread" 错误。
+        # 以下代码为当前线程创建一个新的事件循环来解决此问题。
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:  # 'RuntimeError: There is no current event loop...'
+            asyncio.set_event_loop(asyncio.new_event_loop())
+
+
         embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
         st.info("嵌入模型初始化完成。")
 
-        # 4. 创建内存向量存储并添加文档
-        vector_store = InMemoryVectorStore(embeddings)
-        vector_store.add_documents(documents=all_splits)
+        # 4. 创建向量存储并添加文档
+
+        # 可选用内存向量存储
+        # vector_store = InMemoryVectorStore(embeddings)
+
+
+        # 初始化Chroma向量存储
+        # collection_name 是存储文档的集合名称
+        # embedding_function 指定用于生成嵌入的函数
+        # persist_directory 指定数据本地保存的路径，如果不需要持久化可以移除
+        vector_store = Chroma(
+            collection_name="example_collection",
+            embedding_function=embeddings,
+            persist_directory="./chroma_langchain_db",
+        )
+        print("Chroma向量存储 (Vector Store) 已初始化。")
+
+
+        # 分批处理文档以避免API速率限制
+        batch_size = 20
+        total_splits = len(all_splits)
+        st.info(f"准备将 {total_splits} 个文档块分批添加到向量存储中，每批 {batch_size} 个。")
+
+        # 使用tqdm显示进度条
+        progress_bar = st.progress(0)
+        for i in tqdm(range(0, total_splits, batch_size), desc="添加文档到向量存储"):
+            batch = all_splits[i:i+batch_size]
+            vector_store.add_documents(documents=batch)
+            # 更新Streamlit进度条
+            progress_bar.progress(min((i + batch_size) / total_splits, 1.0))
+
         st.info("向量存储构建完成。")
 
         # 5. 创建检索器
