@@ -110,11 +110,17 @@ https://python.langchain.com/docs/tutorials/qa_chat_history/
 
 
 
+## RAG-App-FastAPI
 
+代码文件夹
 
+[RAG-App-FastAPI](RAG-App-FastAPI)
 
+文档
 
+[RAG-App-FastAPI\RAG-App-FastAPI.md](RAG-App-FastAPI/RAG-App-FastAPI.md)
 
+将 RAG 应用程序（包括基于链和基于代理的版本）与FastAPI结合，将其部署为Web服务。使得 RAG 应用能够通过 HTTP 请求进行访问，并支持对话记忆。
 
 
 
