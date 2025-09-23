@@ -30,6 +30,8 @@ venv.bak/
 .streamlit/cache/
 .streamlit/server_state.json
 .streamlit/secrets.toml # ⚠️ IMPORTANT: Keep your API keys out of version control!
+secrets.toml
+
 
 # IDE and Editor files
 .idea/                  # PyCharm
