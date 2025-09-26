@@ -7,6 +7,12 @@ from urllib.parse import urlparse
 
 # 导入 LangChain 核心组件
 from langchain_community.document_loaders import SitemapLoader, RecursiveUrlLoader
+
+
+# 新增导入
+from langchain_community.document_transformers import BeautifulSoupTransformer
+
+
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 # ****** 关键修改 1: 导入新的 HuggingFaceEmbeddings ******
 from langchain_huggingface import HuggingFaceEmbeddings
@@ -61,9 +67,27 @@ async def load_and_process_documents(url: str):
         
         logging.info(f"成功加载 {len(documents)} 篇文档。")
 
-        # 2. 文本分割
+        # --- 1.5. 新增步骤：HTML 内容清洗 ---
+        logging.info("开始对加载的文档进行 HTML 清洗...")
+        # 初始化 BeautifulSoupTransformer
+        bs_transformer = BeautifulSoupTransformer()
+        
+        # 调用 transform_documents 方法，它会遍历所有文档，
+        # 使用 BeautifulSoup 解析每个文档的 page_content，
+        # 并只提取出文本内容，替换掉原来的带标签的内容。
+        # get_text() 方法默认会智能地处理换行和空格。
+        cleaned_documents = bs_transformer.transform_documents(
+            documents, 
+            tags_to_extract=["p", "li", "div", "a", "span", "h1", "h2", "h3"], # 可以指定只从这些标签提取
+            unwanted_tags=["script", "style"] # 明确移除脚本和样式标签
+        )
+        logging.info("HTML 清洗完成。")
+        # --- 清洗步骤结束 ---
+
+        # --- 2. 文本分割 ---
+        # 现在，我们对清洗过的文档进行分割
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
-        all_splits = text_splitter.split_documents(documents)
+        all_splits = text_splitter.split_documents(cleaned_documents) # 使用 cleaned_documents
         logging.info(f"文档被分割成 {len(all_splits)} 个块。")
 
         # --- 核心修改 2: 初始化本地嵌入模型 ---
