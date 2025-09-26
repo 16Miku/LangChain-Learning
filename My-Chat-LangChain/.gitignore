@@ -48,3 +48,8 @@ Desktop.ini             # Windows
 
 # Jupyter Notebook files
 .ipynb_checkpoints/
+
+
+# Vector Store Data
+# 忽略所有以 chroma_db_ 开头的文件夹
+backend/chroma_db_*/

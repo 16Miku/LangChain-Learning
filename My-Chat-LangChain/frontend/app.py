@@ -82,7 +82,7 @@ col1, col2 = st.columns([3, 1])
 with col1:
     new_url = st.text_input("知识库 URL:", st.session_state.current_url)
 with col2:
-    st.selectbox("模型:", ["Gemini 1.5 Flash (Backend)"], disabled=True)
+    st.selectbox("模型:", ["Gemini 2.5 Flash (Backend)"], disabled=True)
 if st.session_state.current_url != new_url:
     st.session_state.current_url = new_url
     st.session_state.messages = []

@@ -17,3 +17,9 @@ typora-copy-images-to: media
 
 [My-Chat-LangChain\Note-V2.md](Note-V2.md)
 
+
+## My-Chat-LangChain 应用说明书 v2.0 (企业版)
+
+
+
+[My-Chat-LangChain\Note-V3.md](Note-V3.md)
