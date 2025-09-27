@@ -60,7 +60,7 @@ My-Chat-LangChain v2.0 是一个从原型演进为企业级架构的、基于 La
     *   **服务器:** Uvicorn
 *   **AI / 核心逻辑:**
     *   **编排框架:** LangChain
-    *   **大语言模型 (LLM):** Google Gemini (`gemini-1.5-flash`)
+    *   **大语言模型 (LLM):** Google Gemini (`gemini-2.5-flash`)
     *   **嵌入模型 (Embeddings):** SentenceTransformers (`all-MiniLM-L6-v2`, 本地运行)
     *   **文档加载:** `langchain_community`
     *   **文本分割:** `langchain`

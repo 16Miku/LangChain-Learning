@@ -59,13 +59,29 @@ My-Chat-LangChain v3.0 是一个实现了高级 RAG (检索增强生成) 技术�
 
 #### **3. 技术栈 (新增与变更)**
 
+*   **前端:**
+    *   **框架:** Streamlit
+    *   **HTTP 客户端:** Requests
+*   **后端:**
+    *   **API 框架:** FastAPI
+    *   **服务器:** Uvicorn
 *   **AI / 核心逻辑:**
-    *   **重排模型 (Re-ranker):** FlashRank (`BAAI/bge-reranker-base`, 本地运行)
+    *   **编排框架:** LangChain
+    *   **大语言模型 (LLM):** Google Gemini (`gemini-2.5-flash`)
+    *   **嵌入模型 (Embeddings):** SentenceTransformers (`all-MiniLM-L6-v2`, 本地运行)
+    *   **文档加载:** `langchain_community`
+    *   **文本分割:** `langchain`
+    *   **重排模型 (Re-ranker):** FlashRank 
     *   **HTML 清洗:** BeautifulSoup4
+*   **向量数据库:**
+    *   ChromaDB (本地持久化)
 *   **开发工具:**
+    *   **包管理:** pip
+    *   **虚拟环境:** conda
+    *   **环境变量:** python-dotenv
     *   **哈希库:** hashlib (用于生成持久化目录名)
 
-*(其他技术栈与 v2.0 保持一致)*
+
 
 #### **4. 环境准备与安装**
 
@@ -150,7 +166,7 @@ pip install fastapi "uvicorn[standard]" langchain langchain-community langchain-
 *   **解决方案 (`langchain_qa_backend.py`):**
     1.  **引入 `ContextualCompressionRetriever`:** 这是 LangChain 中实现重排模式的核心组件。
     2.  **集成 `FlashrankRerank`:**
-        *   我们选择并集成了 `BAAI/bge-reranker-base` 这个强大的本地开源重排模型，避免了注册国外服务和 API 依赖。
+        *   参考[FlashRank 重排序器](https://python.langchain.ac.cn/docs/integrations/retrievers/flashrank-reranker/)文档，进行了配置。 
         *   我们实例化 `FlashrankRerank(top_n=10)`，`top_n` 参数指定了我们希望从海量召回的文档中，最终精选出多少个最相关的文档。
     3.  **重构 RAG 链:**
         *   将基础的向量检索器 `vector_store.as_retriever()` 的 `k` 值调大（如 `k=100`），让它尽可能多地召回候选文档。
@@ -165,7 +181,7 @@ pip install fastapi "uvicorn[standard]" langchain langchain-community langchain-
     1.  **勤查官方文档:** 这是解决开源库问题的黄金法则。我们最终通过对比最新的官方文档，找到了 `FlashrankRerank` 正确的导入路径。
     2.  **管理依赖版本:** 通过 `pip install --upgrade` 确保核心库 (`langchain`, `langchain-community` 等) 保持最新，解决了因版本过旧导致类或函数不存在的问题。
     3.  **理解错误信息:** 深入阅读 `PydanticUserError` 的提示，虽然最终的解决方案是修正导入路径，但这个过程让我们理解了 LangChain 底层对 Pydantic 的依赖。
-    4.  **净化环境:** 在遇到顽固问题时，通过删除本地缓存 (`.cache/huggingface`) 和强制重新安装 (`--force-reinstall`) 的方式，确保了环境的纯净，排除了缓存污染的可能性。
+
 
 ##### **挑战六：状态丢失问题——实现持久化**
 
@@ -375,7 +391,7 @@ def get_retrieval_chain(base_retriever):
     if base_retriever is None: return None
     
     # --- 初始化重排器 ---
-    # `FlashrankRerank` 会自动下载并加载 `BAAI/bge-reranker-base` 模型。
+    # `FlashrankRerank` 会自动下载并加载默认的重排序模型。
     # `top_n=10` 表示它会从输入的所有文档中，精选出最相关的 10 个。
     reranker = FlashrankRerank(top_n=10)
     logging.info("本地 Rerank 模型加载完成。")
@@ -389,7 +405,7 @@ def get_retrieval_chain(base_retriever):
     )
     
     # --- 构建最终的 RAG 链 ---
-    model = ChatGoogleGenerativeAI(model="gemini-1.5-flash", temperature=0.3) 
+    model = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0.3) 
     retrieval_qa_chat_prompt = hub.pull("langchain-ai/retrieval-qa-chat")
     combine_docs_chain = create_stuff_documents_chain(model, retrieval_qa_chat_prompt)
     # `create_retrieval_chain` 将我们强大的 `compression_retriever` 和文档组合链连接起来。
