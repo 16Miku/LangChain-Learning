@@ -1,18 +1,24 @@
 # backend/main.py
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any # 引入 Dict 和 Any 用于更灵活的类型定义
 import numpy as np # 导入 numpy 库，以便我们能识别它的类型
 import os # 导入 os 库来检查文件夹是否存在
+import json
+import tempfile
+import hashlib
+
 
 
 # 导入我们重构后的后端逻辑模块
 from langchain_qa_backend import (
-    create_vector_store, 
+    create_vector_store_from_url,
+    create_vector_store_from_file,
     load_vector_store, 
     get_retrieval_chain, 
-    get_persist_directory_for_url
+    get_persist_directory_for_url,
+    get_persist_directory_for_file
 )
 from langchain_core.messages import HumanMessage, AIMessage
 
@@ -70,79 +76,128 @@ def clean_metadata(metadata: dict) -> dict:
     return cleaned
 
 
-# --- 5. 定义 API 端点 (Endpoint) ---
+# --- 4. API 端点 ---
 @app.get("/", tags=["Health Check"])
 def read_root():
-    return {"status": "ok", "message": "Welcome to the RAG Backend API!"}
+    return {"status": "ok", "message": "Welcome to the RAG Backend API v4.0!"}
 
-@app.post("/chat", response_model=ChatResponse, tags=["RAG Chat"])
-async def chat_endpoint(request: ChatRequest):
+# --- URL 问答端点 (逻辑重构) ---
+@app.post("/chat_url", response_model=ChatResponse, tags=["RAG Chat"])
+async def chat_url_endpoint(request: ChatRequest):
     url = request.url
     query = request.query
     
     if url in rag_chain_cache:
         retrieval_chain = rag_chain_cache[url]
-        print(f"从缓存中获取 RAG 链: {url}")
+        print(f"从内存缓存中获取 RAG 链 (URL): {url}")
     else:
-        # --- 核心重构：实现持久化加载逻辑 ---
-        # 1. 根据 URL 生成唯一的持久化目录路径
         persist_directory = get_persist_directory_for_url(url)
         
-        # 2. 检查这个目录是否已经存在
         if os.path.exists(persist_directory):
-            # 如果存在，直接从磁盘加载
-            print(f"从磁盘持久化目录加载知识库: {persist_directory}")
+            print(f"从磁盘加载知识库 (URL): {persist_directory}")
             vector_store = load_vector_store(persist_directory)
         else:
-            # 如果不存在，才执行完整的创建流程
-            print(f"磁盘上无此知识库，开始为 URL 创建新的知识库: {url}")
-            vector_store = await create_vector_store(url, persist_directory)
+            print(f"创建新知识库 (URL): {url}")
+            vector_store = await create_vector_store_from_url(url, persist_directory)
         
         if not vector_store:
-            raise HTTPException(status_code=500, detail="Failed to load or create vector store.")
+            raise HTTPException(status_code=500, detail="Failed to process URL.")
         
-        # 3. 用获取到的 vector_store 创建检索器和 RAG 链
-        # 我们让基础检索器召回更多的文档，为重排器提供充足的候选材料
-        base_retriever = vector_store.as_retriever(search_kwargs={"k": 200})
+        base_retriever = vector_store.as_retriever(search_kwargs={"k": 20})
         retrieval_chain = get_retrieval_chain(base_retriever)
-        
         if not retrieval_chain:
             raise HTTPException(status_code=500, detail="Failed to create RAG chain.")
-        
-        # 4. 将最终的链存入内存缓存
         rag_chain_cache[url] = retrieval_chain
-        print(f"新的 RAG 链已创建并缓存到内存: {url}")
+        print(f"RAG 链已为 URL {url} 创建并缓存。")
 
+    # --- 后续调用逻辑 (与文件端点复用) ---
+    return await invoke_rag_chain(retrieval_chain, query, request.chat_history)
+
+# --- 新增：文件问答端点 ---
+@app.post("/chat_file", response_model=ChatResponse, tags=["RAG Chat"])
+async def chat_file_endpoint(
+    query: str = Form(...),
+    chat_history_str: str = Form("[]"),
+    file: UploadFile = File(...)
+):
+    # 1. 安全地处理上传的文件
+    # 使用 with 语句确保临时目录在操作完成后被自动清理
+    with tempfile.TemporaryDirectory() as temp_dir:
+        temp_filepath = os.path.join(temp_dir, file.filename)
+        
+        # 读取文件内容用于计算哈希和写入临时文件
+        file_content = await file.read()
+        with open(temp_filepath, "wb") as f:
+            f.write(file_content)
+        
+        # 2. 持久化与加载逻辑
+        persist_directory = get_persist_directory_for_file(file.filename, file_content)
+        
+        # 使用持久化目录作为内存缓存的 key，因为它是唯一的
+        if persist_directory in rag_chain_cache:
+            retrieval_chain = rag_chain_cache[persist_directory]
+            print(f"从内存缓存中获取 RAG 链 (File): {file.filename}")
+        else:
+            if os.path.exists(persist_directory):
+                print(f"从磁盘加载知识库 (File): {persist_directory}")
+                vector_store = load_vector_store(persist_directory)
+            else:
+                print(f"创建新知识库 (File): {file.filename}")
+                vector_store = await create_vector_store_from_file(temp_filepath, persist_directory)
+
+            if not vector_store:
+                raise HTTPException(status_code=500, detail="Failed to process File.")
+            
+            base_retriever = vector_store.as_retriever(search_kwargs={"k": 20})
+            retrieval_chain = get_retrieval_chain(base_retriever)
+            if not retrieval_chain:
+                raise HTTPException(status_code=500, detail="Failed to create RAG chain.")
+            rag_chain_cache[persist_directory] = retrieval_chain
+            print(f"RAG 链已为文件 {file.filename} 创建并缓存。")
+
+    # 3. 解析聊天历史并调用链
+    chat_history = json.loads(chat_history_str)
+    return await invoke_rag_chain(retrieval_chain, query, chat_history)
+
+# --- 修改：复用的 RAG 调用函数 ---
+async def invoke_rag_chain(chain, query: str, history: List[Any]): # 将类型提示改为更通用的 List[Any]
+    """
+    一个可复用的函数，用于格式化历史记录、调用 RAG 链并处理响应。
+    现在它可以同时接受字典列表和 Pydantic 对象列表。
+    """
+    # 格式化聊天历史
     formatted_chat_history = []
-    for item in request.chat_history:
-        if item.role.lower() == "user":
-            formatted_chat_history.append(HumanMessage(content=item.content))
-        elif item.role.lower() == "ai":
-            formatted_chat_history.append(AIMessage(content=item.content))
+    for item in history:
+        # --- 核心修改：使用 hasattr 和 getattr 来安全地访问属性 ---
+        # 这种方式对字典 (用 .get()) 和对象 (用 .) 都有效
+        if isinstance(item, dict):
+            # 如果是字典，使用 .get()
+            role = item.get("role")
+            content = item.get("content")
+        else:
+            # 如果是 Pydantic 对象，使用 .role 和 .content
+            role = item.role
+            content = item.content
 
+        if role == "user":
+            formatted_chat_history.append(HumanMessage(content=content))
+        elif role == "assistant":
+            formatted_chat_history.append(AIMessage(content=content))
+    
     try:
-        # 调用RAG链
-        response = retrieval_chain.invoke({
+        # 调用链 (后续逻辑不变)
+        response = chain.invoke({
             "input": query,
             "chat_history": formatted_chat_history
         })
         
-        # --- 核心修改：从 RAG 链的响应中提取源文档 ---
-        # create_retrieval_chain 返回的响应字典中，'context' 键对应的值就是检索到的文档列表
+        # 清洗并格式化源文档
         source_documents = response.get("context", [])
-        
-        # --- 核心修改：在构造响应前，清洗源文档的元数据 ---
-        formatted_sources = []
-        for doc in source_documents:
-            # 对每个文档的 metadata 调用我们的清洗函数
-            cleaned_meta = clean_metadata(doc.metadata)
-            formatted_sources.append(
-                SourceDocument(page_content=doc.page_content, metadata=cleaned_meta)
-            )
-        
-        # 构造并返回包含答案和源文档的完整响应
+        formatted_sources = [
+            SourceDocument(page_content=doc.page_content, metadata=clean_metadata(doc.metadata))
+            for doc in source_documents
+        ]
         return ChatResponse(answer=response["answer"], source_documents=formatted_sources)
-
     except Exception as e:
         print(f"调用 RAG 链时出错: {e}")
-        raise HTTPException(status_code=500, detail=f"An error occurred while generating the answer: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
