@@ -34,4 +34,5 @@ typora-copy-images-to: media
 [My-Chat-LangChain\Note-V4.md](Note-V4.md)
 
 
+[CSDN文章：从0到1，构建你的专属AI知识库：My-Chat-LangChain项目深度解析](https://blog.csdn.net/m0_73479109/article/details/152751205?spm=1001.2014.3001.5501)
 

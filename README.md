@@ -72,15 +72,32 @@ https://python.langchain.com/docs/integrations/document_loaders/sitemap/
 
 
 
-## My-Chat-LangChain
+## My-Chat-LangChain子项目
 
-代码文件夹
-[My-Chat-LangChain](My-Chat-LangChain)
+
+[My-Chat-LangChain子项目目录](My-Chat-LangChain)
 
 [My-Chat-LangChain/README.md](My-Chat-LangChain/README.md)
 
 
-简介：本应用是一个基于 LangChain 框架和 Streamlit 构建的问答机器人系统。它允许用户指定一个网页 URL 作为知识库来源，然后通过自然语言提问，机器人将根据该网页及其子链接的内容提供回答。应用前端界面采用 Streamlit 构建，并进行了自定义样式以提供美观的用户体验。
+[CSDN文章：从0到1，构建你的专属AI知识库：My-Chat-LangChain项目深度解析](https://blog.csdn.net/m0_73479109/article/details/152751205?spm=1001.2014.3001.5501)
+
+
+
+`My-Chat-LangChain`是一个设计简洁、功能强大的问答平台，它提供了两种构建知识库的核心模式：
+
+1.  **网页知识库 (Webpage Knowledge Base):** 你只需输入任意一个网站的URL，系统便会自动抓取、解析该网站的内容，并在几分钟内构建一个可供对话的知识库。你可以用它来学习在线教程、分析新闻文章，或者快速理解任何网页的核心信息。
+
+2.  **文档知识库 (Document Knowledge Base):** 你可以直接从本地上传PDF文件。系统会智能地解析文档内容，并为你创建一个完全私密的、基于该文档的问答机器人。这对于学习研究报告、阅读法律文件或理解产品手册等场景非常有用。
+
+为了实现优雅、高效的人机交互，整个应用在设计上遵循了几个关键原则：
+
+*   **清晰的功能分区：** 前端界面采用`Streamlit Tabs`（选项卡）设计，将“网页”和“文档”两大功能清晰地隔离开，用户可以自由切换，操作流程一目了然。
+*   **前后端分离架构：** 采用现代Web开发模式，前端（Streamlit）负责用户交互和展示，后端（FastAPI）负责繁重的AI计算和数据处理。这种模式让项目结构更清晰，也更容易维护和扩展。
+*   **智能缓存机制：** 为了提升效率和节省资源，后端设计了一套智能持久化策略。无论是URL还是上传的文件，只要内容不变，系统处理过一次后就会将知识库保存在本地。下次再处理相同内容时，系统会直接加载缓存，实现秒级响应，极大提升了用户体验。
+
+
+
 
 
 
