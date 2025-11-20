@@ -227,4 +227,18 @@ https://langchain-ai.github.io/langgraph/tutorials/langgraph-platform/local-serv
 
 
 
+## LangGraph+BrightData+PaperSearch的研究助理
+
+
+
+
+[Agent-Demo](My-Chat-LangChain/Agent-Demo.md)
+
+
+
+[稀土掘金文章：LangGraph+BrightData+PaperSearch的研究助理](https://juejin.cn/post/7572714389942337588)
+
+
+
+
 

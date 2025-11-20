@@ -36,3 +36,26 @@ typora-copy-images-to: media
 
 [CSDN文章：从0到1，构建你的专属AI知识库：My-Chat-LangChain项目深度解析](https://blog.csdn.net/m0_73479109/article/details/152751205?spm=1001.2014.3001.5501)
 
+[稀土掘金文章：从0到1，构建你的专属AI知识库：My-Chat-LangChain项目深度解析](https://juejin.cn/post/7564230484126859303)
+
+
+
+
+
+
+## My-Chat-LangChain 应用说明书 v5.0 (引入Agent)
+
+
+
+[My-Chat-LangChain\Note-V5.md](Note-V5.md)
+
+
+
+
+
+
+
+
+
+
+
