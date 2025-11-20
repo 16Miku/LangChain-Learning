@@ -1,80 +1,105 @@
 /* frontend/style.css */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
 
-html, body, [class*="st-emotion"] {
-    font-family: 'Inter', sans-serif;
-    color: #e0e0e0;
-}
-
+/* --- Global Styles --- */
 .stApp {
-    background-color: #1c1c1e;
+    background-color: #f8f9fa; /* Light gray background */
+    font-family: 'Inter', sans-serif;
 }
 
+/* --- Sidebar --- */
 [data-testid="stSidebar"] {
-    background-color: #2c2c2e;
-    border-right: 1px solid #3a3a3c;
-}
-[data-testid="stSidebar"] h2 {
-    color: #fafafa;
-    font-weight: 600;
-}
-[data-testid="stSidebar"] .stMarkdown p {
-    color: #a0a0a5;
-    font-size: 0.9rem;
+    background-color: #ffffff;
+    border-right: 1px solid #e0e0e0;
 }
 
-.block-container {
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-}
-h1 {
-    font-weight: 700;
-    color: #fafafa;
-}
-
+/* --- Chat Messages --- */
 [data-testid="stChatMessage"] {
-    background: none;
-    border: none;
-    padding: 0;
-    margin-bottom: 1.5rem;
-}
-[data-testid="stChatMessage"] .st-emotion-cache-1c7y2kd {
-    background-color: #3a3a3c;
-    border-radius: 20px;
-    padding: 12px 18px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    max-width: 75%;
+    background-color: transparent;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
 }
 
-[data-testid="stChatMessage"]:has([data-testid="stChatMessageContentUser"]) {
-    display: flex;
-    justify-content: flex-end;
-}
-[data-testid="stChatMessage"]:has([data-testid="stChatMessageContentUser"]) .st-emotion-cache-1c7y2kd {
-    background-color: #007aff;
-    color: white;
-    border-bottom-right-radius: 5px;
+/* User Message Bubble */
+[data-testid="stChatMessage"]:has([data-testid="stChatMessageContent"] > div:first-child:contains("🧑‍💻")) {
+    flex-direction: row-reverse;
+    text-align: right;
 }
 
-[data-testid="stChatMessage"]:has([data-testid="stChatMessageContentAssistant"]) {
-    display: flex;
-    justify-content: flex-start;
-}
-[data-testid="stChatMessage"]:has([data-testid="stChatMessageContentAssistant"]) .st-emotion-cache-1c7y2kd {
-    border-bottom-left-radius: 5px;
+/* Style the content container for messages */
+[data-testid="stChatMessageContent"] {
+    background-color: white;
+    padding: 15px;
+    border-radius: 15px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    width: fit-content;
+    max-width: 80%;
 }
 
-.stButton>button {
+/* Specific styling for User vs Assistant bubbles based on avatar/role is tricky with pure CSS selectors in Streamlit's dynamic DOM.
+   Instead, we rely on the layout structure provided by st.chat_message() and add general enhancements. 
+*/
+
+/* Assistant Message Enhancements */
+/* Giving assistant messages a slightly different look */
+[data-testid="stChatMessage"] [data-testid="stChatMessageAvatar"] {
+    background-color: #f0f2f6;
+    border-radius: 50%;
+    padding: 5px;
+}
+
+
+/* --- Structured Output Cards (Paper Analysis, Profile) --- */
+/* Note: These classes need to be injected or used within st.markdown(..., unsafe_allow_html=True) if we were writing raw HTML. 
+   Since we are using st.markdown/st.info, we style the standard Streamlit elements they map to. 
+*/
+
+/* Improve the look of st.info / st.success boxes used in structured output */
+.stAlert {
     border-radius: 10px;
-    background-color: #3a3a3c;
-    border: 1px solid #4a4a4c;
-    color: #e0e0e0;
-    transition: all 0.2s ease-in-out;
+    border: none;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
-.stButton>button:hover {
-    background-color: #4a4a4c;
-    border-color: #5a5a5c;
-    color: #ffffff;
-    transform: scale(1.02);
+
+/* --- Input Area --- */
+/* Make the chat input stick to the bottom with a nice shadow */
+[data-testid="stChatInput"] {
+    position: fixed;
+    bottom: 20px;
+    left: 50%; 
+    transform: translateX(-50%);
+    max-width: 700px;
+    width: 100%;
+    z-index: 100;
+    background: transparent;
+}
+
+/* --- Tabs --- */
+.stTabs [data-baseweb="tab-list"] {
+    gap: 20px;
+}
+
+.stTabs [data-baseweb="tab"] {
+    height: 50px;
+    white-space: pre-wrap;
+    background-color: white;
+    border-radius: 8px;
+    padding: 10px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border: 1px solid #eee;
+}
+
+.stTabs [aria-selected="true"] {
+    background-color: #e3f2fd;
+    border-color: #2196f3;
+    color: #1565c0;
+}
+
+/* --- Expander for Sources --- */
+.streamlit-expanderHeader {
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    font-size: 0.9rem;
 }
