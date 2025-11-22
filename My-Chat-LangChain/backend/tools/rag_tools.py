@@ -1,20 +1,13 @@
 import os
 import asyncio
+from typing import Optional, Dict, Any
 from langchain_core.tools import tool
 from langchain_qa_backend import (
-    create_vector_store_from_url,
-    load_vector_store,
-    get_retrieval_chain,
-    get_persist_directory_for_url
+    ingest_url,
+    ingest_file,
+    get_retrieval_chain
 )
-from langchain_core.messages import HumanMessage, AIMessage
-from typing import List, Dict, Any
 import numpy as np
-
-# RAG Chain Cache (Shared with main app if needed, or separate)
-# Note: Ideally this should be a shared cache, but for tool simplicity we might maintain a local one 
-# or import the one from main if structure allows. For now, let's keep a local cache for the tool.
-tool_rag_chain_cache = {}
 
 def clean_metadata(metadata: dict) -> dict:
     """Recursively convert numpy types to python types for JSON serialization"""
@@ -29,74 +22,74 @@ def clean_metadata(metadata: dict) -> dict:
     return cleaned
 
 @tool
-async def ingest_knowledge(url: str):
+async def ingest_knowledge(source: str, type: str):
     """
-    将指定的网页URL内容摄取并处理为知识库。
-    当用户要求学习某个新网页或基于某个网页进行问答时，首先调用此工具。
+    统一的知识摄取工具。将网页URL或本地文件内容摄取到统一的向量知识库中。
+    
+    Args:
+        source (str): 资源路径。如果是URL则为http链接，如果是文件则为文件名（后端已保存到临时区）。
+        type (str): 资源类型。可选值: 'url', 'file'。
     """
-    print(f"\n📚 [Knowledge] 正在摄取知识库: {url} ...")
+    print(f"\n📚 [Knowledge] 正在摄取知识库: {source} (Type: {type})...")
     
-    # Check if chain already exists in cache
-    if url in tool_rag_chain_cache:
-        print(f"  -> 知识库已在缓存中: {url}")
-        return f"知识库已准备就绪 (Cached): {url}"
-
-    # Check persistence
-    persist_directory = get_persist_directory_for_url(url)
-    if os.path.exists(persist_directory):
-        print(f"  -> 从磁盘加载知识库: {persist_directory}")
-        vector_store = load_vector_store(persist_directory)
-    else:
-        print(f"  -> 创建新知识库: {url}")
-        vector_store = await create_vector_store_from_url(url, persist_directory)
-    
-    if not vector_store:
-        return f"❌ 错误: 无法处理 URL {url}"
-
-    # Create Chain
-    base_retriever = vector_store.as_retriever(search_kwargs={"k": 20})
-    retrieval_chain = get_retrieval_chain(base_retriever)
-    
-    if not retrieval_chain:
-        return f"❌ 错误: 无法为 {url} 创建 RAG 链"
+    success = False
+    if type == 'url':
+        success = await ingest_url(source)
+    elif type == 'file':
+        # For file ingestion, the backend API should have already saved the file 
+        # and passed the path. However, 'source' here is likely just the filename 
+        # if called by the LLM based on user context.
+        # We assume the file is in a temporary holding area known to the backend.
+        # For simplicity in this tool, we might need the full path.
+        # Let's assume 'source' passed by Agent is the filename user sees.
+        # We need to look it up in a temp dir.
+        temp_dir = "./temp_uploads" 
+        filepath = os.path.join(temp_dir, source)
         
-    tool_rag_chain_cache[url] = retrieval_chain
-    print(f"✅ [Knowledge] 知识库摄取完成: {url}")
-    return f"成功学习了网页内容: {url}"
+        if os.path.exists(filepath):
+            success = await ingest_file(filepath, source)
+        else:
+            return f"❌ 错误: 找不到文件 {source}。请确认文件已上传。"
+    else:
+        return f"❌ 错误: 不支持的类型 {type}"
+    
+    if success:
+        print(f"✅ [Knowledge] 知识库摄取完成: {source}")
+        return f"成功学习了 {type} 内容: {source}"
+    else:
+        return f"❌ 错误: 无法处理 {source}"
 
 @tool
-async def query_knowledge(query: str, url: str):
+async def query_knowledge_base(query: str, source_filter: Optional[str] = None):
     """
-    基于已摄取的网页知识库回答问题。
-    必须先调用 `ingest_knowledge` 确保该 URL 已被处理。
-    """
-    print(f"\n🤔 [RAG] 正在查询知识库 ({url}): {query} ...")
+    统一的知识库查询工具。
     
-    if url not in tool_rag_chain_cache:
-        # Try to auto-ingest if not found (optional, but robust)
-        print(f"  -> 警告: URL {url} 未在缓存中，尝试自动摄取...")
-        await ingest_knowledge(url)
-        if url not in tool_rag_chain_cache:
-            return f"❌ 错误: 知识库未找到且无法自动加载: {url}"
-
-    chain = tool_rag_chain_cache[url]
+    Args:
+        query (str): 用户的具体问题。
+        source_filter (Optional[str]): 可选。如果指定，仅从该特定的 URL 或文件名中检索答案。
+                                     如果不指定，则从整个知识库中检索。
+    """
+    filter_msg = f" (Filter: {source_filter})" if source_filter else " (Global Search)"
+    print(f"\n🤔 [RAG] 正在查询知识库: {query}{filter_msg} ...")
     
     try:
-        # Minimal history for single-turn tool usage, or pass full history if available in context
+        # Create chain on the fly (lightweight)
+        chain = get_retrieval_chain(source_filter)
+        
         response = await chain.ainvoke({
             "input": query,
-            "chat_history": [] # Tool call usually handles single specific query
+            "chat_history": [] 
         })
         
         answer = response["answer"]
         source_documents = response.get("context", [])
         
-        # Format sources for the Agent
+        # Format sources
         sources_text = ""
-        for i, doc in enumerate(source_documents[:3]): # Limit to top 3 sources
+        for i, doc in enumerate(source_documents[:3]):
             cleaned_meta = clean_metadata(doc.metadata)
-            source_url = cleaned_meta.get("source", "Unknown")
-            sources_text += f"\n- Source {i+1} ({source_url}): {doc.page_content[:100]}..."
+            src = cleaned_meta.get("source", "Unknown")
+            sources_text += f"\n- [{i+1}] {src}: {doc.page_content[:100]}..."
 
         final_output = f"{answer}\n\n参考来源:{sources_text}"
         print(f"✅ [RAG] 查询完成。")

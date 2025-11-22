@@ -51,5 +51,10 @@ Desktop.ini             # Windows
 
 
 # Vector Store Data
-# 忽略所有以 chroma_db_ 开头的文件夹
+# 忽略所有以 chroma_db_ 或 data/ 开头的文件夹
 backend/chroma_db_*/
+backend/data/
+
+# Uploads
+# 忽略用户上传的临时文件
+backend/temp_uploads/

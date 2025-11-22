@@ -10,41 +10,39 @@ load_dotenv()
 
 @tool
 async def generate_search_queries(user_requirement: str):
-    """根据user_requirement，生成关于AI人才、学术论文或特定领域的搜索策略。
-    返回包含针对不同平台（如Google, Google Scholar）优化的搜索指令的JSON对象。
+    """
+    根据用户的具体需求 (user_requirement)，智能生成最优的 Google 搜索策略。
+    返回包含针对不同侧重点（如通用搜索、学术搜索、深度挖掘）的搜索指令。
     """
     print(f"\n🧠 [Profiler] 正在为需求 '{user_requirement}' 生成搜索策略...")
 
     prompt = f"""
-    你是一位顶级的、专注于AI基础设施和前沿算法的全球技术猎头及研究专家。
-    你的任务是根据用户的需求，生成一个结构化的、包含针对不同平台优化的“X-Ray”搜索指令的JSON对象。
-    这些指令必须极其专业和精准，以便找到在特定技术领域有深入研究和实践的专家或论文。
+    你是一位世界顶级的搜索情报专家。你的任务是根据用户的需求，生成一组极其精准、专业的 Google 搜索指令 (Search Queries)。
+    你需要分析用户的意图：
+    1. 如果是**事实查询**（如“奥运会金牌榜”），生成直接的关键词。
+    2. 如果是**深度研究**（如“AI Agent 架构设计”），使用 `site:`, `filetype:pdf`, `OR`, `AND` 等高级语法。
+    3. 如果是**寻找特定资源**（如“Python 教程”），定向搜索 GitHub, Medium 等平台。
+    4. 如果是**学术/技术研究**，包含 Google Scholar 风格的查询。
 
     # 用户需求:
     "{user_requirement}"
 
-    # 你的专业知识库 (必须在生成指令时参考):
-    (在此省略了冗长的领域列表，请根据用户需求动态调用你的内部知识库，覆盖MLSys, Agent Infra, 算法与策略, 目标公司/机构等)
-
-    # 指令要求:
-    1.  **平台覆盖**: 必须包含 `google_search` (用于搜索LinkedIn、GitHub、个人主页、公司博客) 和 `google_scholar` (用于搜索学术论文和背景)。
-    2.  **关键词组合**: **必须**将技术关键词与目标公司、职位（如"Staff Engineer", "Principal Researcher", "Architect"）或特定领域进行组合。
-    3.  **指令多样性**: 每个平台下至少生成3-4条不同侧重点的搜索指令。
-    4.  **精准语法**: 大量使用 `site:`, `inurl:`, `intitle:`, `""`, `AND`, `OR`。
-
     # 输出格式 (必须严格遵守，直接输出JSON):
     {{
       "google_search": [
-        "site:linkedin.com/in/ ...",
-        "site:github.com ...",
-        "inurl:blog ..."
+        "指令1 (侧重广度/通用)",
+        "指令2 (侧重特定网站/资源, 如 site:github.com)",
+        "指令3 (侧重文件/报告, 如 filetype:pdf)"
       ],
       "google_scholar": [
-        "author:...",
-        "intitle:...",
-        "..."
+        "指令1 (侧重学术论文/作者)",
+        "指令2 (侧重技术概念)"
       ]
     }}
+    
+    注意：
+    - 必须返回 JSON 格式。
+    - 如果用户需求明显不需要学术搜索（如“今天天气”），google_scholar 列表可以为空。
     """
 
     def _sync_call():
@@ -52,17 +50,12 @@ async def generate_search_queries(user_requirement: str):
             if "GOOGLE_API_KEY" not in os.environ:
                  return {"error": "GOOGLE_API_KEY missing"}
                  
-            # 使用 LangChain 的 ChatGoogleGenerativeAI 替代原生 SDK
+            # 使用 LangChain 的 ChatGoogleGenerativeAI
             llm = ChatGoogleGenerativeAI(
-                model="gemini-1.5-flash",
+                model="gemini-2.5-flash",
                 temperature=0,
                 google_api_key=os.environ["GOOGLE_API_KEY"]
             )
-            # 请求 JSON 格式输出
-            structured_llm = llm.with_structured_output(dict) # 或者直接解析文本
-            
-            # 注意：with_structured_output 需要模型支持或定义 Schema。
-            # 为了简单和兼容性，我们直接用 invoke 并解析 JSON 字符串，或者使用 bind(response_mime_type="application/json")
             
             # 使用 bind 强制 JSON 模式 (Gemini 支持)
             json_llm = llm.bind(response_mime_type="application/json")
@@ -75,15 +68,16 @@ async def generate_search_queries(user_requirement: str):
 
     try:
         result = await asyncio.to_thread(_sync_call)
-        if isinstance(result, dict) and "google_search" in result and "google_scholar" in result:
+        if isinstance(result, dict) and "google_search" in result:
             print("✅ [Profiler] 搜索策略生成成功且格式正确！")
             return result
         else:
             print(f"🟡 [Profiler] LLM返回了非预期的格式: {result}")
-            return None
+            # Fallback structure
+            return {"google_search": [user_requirement], "google_scholar": []}
     except Exception as e:
         print(f"❌ [Profiler] 调用LLM或解析其响应时发生错误: {e}")
-        return None
+        return {"google_search": [user_requirement], "google_scholar": []}
 
 @tool
 async def execute_searches_and_get_urls(search_queries_dict: dict, serper_api_key: str = None):
@@ -102,10 +96,11 @@ async def execute_searches_and_get_urls(search_queries_dict: dict, serper_api_ke
 
     for platform, queries in search_queries_dict.items():
         for query in queries:
+            if not query: continue
             print(f"  -> 正在搜索 '{query}'")
             try:
                 conn = http.client.HTTPSConnection("google.serper.dev")
-                payload_obj = {"q": query, "num": 20}
+                payload_obj = {"q": query, "num": 10} # 减少单次请求数量以加快速度
                 if platform == "google_scholar":
                     payload_obj["engine"] = "google_scholar"
                 else:
@@ -124,11 +119,11 @@ async def execute_searches_and_get_urls(search_queries_dict: dict, serper_api_ke
                 conn.close()
 
                 search_results = []
-                if "organic" in results: # SerperAPI 的普通搜索结果键
+                if "organic" in results: 
                     search_results.extend(results["organic"])
-                if "scholar" in results: # SerperAPI 的学术搜索结果键
+                if "scholar" in results: 
                     search_results.extend(results["scholar"])
-                if "organic_results" in results: # 兼容 SerpApi 的 organic_results
+                if "organic_results" in results: 
                     search_results.extend(results["organic_results"])
 
                 for result in search_results:
@@ -140,4 +135,3 @@ async def execute_searches_and_get_urls(search_queries_dict: dict, serper_api_ke
                 print(f"  -> ❌ 执行搜索 '{query}' 时发生错误: {e}")
     
     print(f"✅ [Scout] 搜索完成！共找到 {len(all_urls)} 个不重复的URL。")
-    return list(all_urls)
