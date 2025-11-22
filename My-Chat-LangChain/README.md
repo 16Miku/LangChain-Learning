@@ -55,6 +55,20 @@ typora-copy-images-to: media
 
 
 
+## My-Chat-LangChain 应用说明书 v6.0 (引入Agent)
+
+
+
+[My-Chat-LangChain\Note-V6.md](Note-V6.md)
+
+
+
+
+
+
+
+
+
 
 
 

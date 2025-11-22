@@ -270,7 +270,7 @@ streamlit run app.py
 ```
 浏览器将自动打开 `http://localhost:8501`。
 
-### 步骤 3: 与 Stream-Agent v6.0 交互
+### 步骤 3: 使用演示
 
 1.  **配置 API Keys:**
     在页面左侧的侧边栏中，展开 **"⚙️ API Keys"**，输入你拥有的 API Key。至少需要一个 LLM 的 Key (如 Google Gemini)。Serper 等 Key 可以增强 Agent 的能力。
@@ -285,20 +285,37 @@ streamlit run app.py
 3.  **开始对话:**
     在底部的输入框中输入你的问题或指令，然后按回车。
 
-    *   **示例1: 基于上传文档的 RAG 查询**
-        > "请总结一下我上传的这篇关于 TensorFlow 和 PyTorch 性能对比的论文。"
 
-        你会看到 Agent 调用 `query_knowledge_base` 工具，并实时输出总结内容。
+    
+    ![alt text](media/Snipaste_2025-11-23_02-26-15.png)
+
+
+    *   **示例1: 基于上传文档的 RAG 查询**
+
+    ![alt text](media/Snipaste_2025-11-23_01-57-21.png)
+
+    在左侧栏上传pdf文件。
+
+    ![alt text](media/Snipaste_2025-11-23_02-10-20.png)
+
+
+
+    向Agent提问，你会看到 Agent 调用 `query_knowledge_base` 工具，并实时输出总结内容。
 
     *   **示例2: 使用网页搜索和分析**
-        > "请帮我找一下吴恩达的领英页面，并总结他的职业经历。"
 
-        Agent 会依次调用 `search_engine` -> `web_data_linkedin_person_profile` -> `format_linkedin_profile` 等工具，你可以在展开的 "Thinking" 区域看到每一步的调用和结果。
+    ![alt text](media/Snipaste_2025-11-23_02-29-59.png)
 
-    *   **示例3: 复杂的组合任务**
-        > "搜索一下2023-2024年关于 Agent 的最新论文，并给我一份详细的摘要报告。"
+    Agent 会依次调用 `search_engine` -> `web_data_linkedin_person_profile` -> `format_linkedin_profile` 等工具，你可以在展开的 "Thinking" 区域看到每一步的调用和结果。
 
-        这将触发一系列复杂的工具调用，充分展示 Agent 的自主规划和执行能力。
+    ![alt text](media/Snipaste_2025-11-23_02-45-13.png)
+
+
+    *   **示例3: 搜索并爬取论文**
+    
+
+    ![alt text](media/Snipaste_2025-11-23_02-41-17.png)
+
 
 ---
 
