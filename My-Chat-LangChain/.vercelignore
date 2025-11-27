@@ -1,0 +1,24 @@
+# Vercel Ignore List
+# Files and folders to exclude from Vercel deployments to reduce size
+
+# Local data and databases
+backend/chroma_db_*
+backend/data/
+backend/temp_uploads/
+chroma_langchain_db/
+*.db
+*.sqlite3
+
+# Environment and virtual env
+.env
+.venv
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Documentation and notes
+Note-V*.md
+Plan-V*.md
+*.pdf
+media/

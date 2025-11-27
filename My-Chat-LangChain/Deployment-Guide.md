@@ -9,6 +9,7 @@
 - **`api/index.py`**: 这是 Vercel 识别的 Python 入口文件。它负责将请求转发给 `backend/main.py` 中的 FastAPI 应用。
 - **`vercel.json`**: Vercel 的配置文件，定义了路由重写规则，确保所有 API 请求都指向 `api/index.py`。
 - **`backend/__init__.py`**: 使 backend 目录成为一个 Python 包，以便在 `api/index.py` 中可以正确导入。
+- **`.vercelignore`**: 指定 Vercel 部署时忽略的文件和文件夹，防止因项目体积过大导致部署失败。
 
 ## 2. 部署步骤
 
@@ -43,9 +44,29 @@
 你可以尝试访问 API 文档路径来验证后端是否正常运行：
 - `https://your-project.vercel.app/docs`
 
-## 常见问题
-- **依赖安装慢**: Vercel 的构建时间有限制。如果依赖项非常多（特别是像 torch 这种大型库），可能会导致超时。目前的 `requirements.txt` 看起来是标准的，应该没问题。
-- **ChromaDB**: ChromaDB 是一个基于文件的向量数据库。在 Vercel 的 Serverless 环境中，文件系统是临时的（ephemeral）。这意味着**重新部署后，数据库中的数据会丢失**。如果你需要持久化存储，建议使用 ChromaDB 的 Client-Server 模式（连接到远程服务器）或其他云端向量数据库（如 Pinecone）。
+## 常见问题与故障排除
+
+### 1. 部署失败：RangeError [ERR_OUT_OF_RANGE] (Size Limit Exceeded)
+**现象**: 部署时出现类似 `RangeError [ERR_OUT_OF_RANGE]: The value of "size" is out of range... Received 4_365_815_886` 的错误。
+**原因**: 项目体积过大（例如 4GB+），超出了 Vercel 的构建限制。通常是因为本地的向量数据库文件（ChromaDB）或大文件被包含在了上传列表中。
+**解决方法**:
+1. **使用 .vercelignore**: 我们已经添加了 `.vercelignore` 文件，明确忽略了 `backend/chroma_db_*`、`chroma_langchain_db/`、`backend/data/` 等大文件夹。
+2. **检查 Git 历史**: 如果这些大文件曾经被提交到 Git 历史中，Vercel 可能会从 Git 拉取它们。
+   - 运行 `git status` 检查是否有未忽略的大文件。
+   - 如果大文件已被追踪，请运行以下命令将它们从 Git 索引中移除（但保留本地文件）：
+     ```bash
+     git rm -r --cached My-Chat-LangChain/backend/chroma_db_*
+     git rm -r --cached My-Chat-LangChain/backend/data/
+     git rm -r --cached My-Chat-LangChain/chroma_langchain_db/
+     git commit -m "Stop tracking large data files"
+     git push
+     ```
+
+### 2. 依赖安装慢
+Vercel 的构建时间有限制。如果依赖项非常多（特别是像 torch 这种大型库），可能会导致超时。目前的 `requirements.txt` 看起来是标准的，应该没问题。
+
+### 3. ChromaDB 数据丢失
+ChromaDB 是一个基于文件的向量数据库。在 Vercel 的 Serverless 环境中，文件系统是临时的（ephemeral）。这意味着**重新部署后，数据库中的数据会丢失**。如果你需要持久化存储，建议使用 ChromaDB 的 Client-Server 模式（连接到远程服务器）或其他云端向量数据库（如 Pinecone）。
 
 ## 前端部署 (可选)
 该项目包含一个基于 Streamlit 的前端。Streamlit 应用通常部署在 [Streamlit Cloud](https://streamlit.io/cloud) 上，而不是 Vercel。
@@ -53,4 +74,3 @@
 1. 在 Streamlit Cloud 上创建一个新应用。
 2. 仓库连接到同一个 GitHub 仓库。
 3. "Main file path" 设置为 `My-Chat-LangChain/frontend/app.py`。
-4. 记得在 Streamlit Cloud 的设置中配置 `BACKEND_URL` 环境变量，指向你在 Vercel 上部署的后端地址。

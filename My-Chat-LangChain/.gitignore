@@ -54,6 +54,9 @@ Desktop.ini             # Windows
 # 忽略所有以 chroma_db_ 或 data/ 开头的文件夹
 backend/chroma_db_*/
 backend/data/
+chroma_langchain_db/
+*.db
+*.sqlite3
 
 # Uploads
 # 忽略用户上传的临时文件
