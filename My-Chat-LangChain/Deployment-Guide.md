@@ -1,115 +1,56 @@
-# My-Chat-LangChain 分离部署指南 (Split Deployment)
+# Vercel 部署指南 (中文版)
 
-本指南详细说明如何将 **My-Chat-LangChain (v6.0)** 项目进行分离部署：后端托管于 **Vercel**，前端托管于 **Streamlit Cloud**。
+为了解决 Vercel 部署时出现的 "Error: No fastapi entrypoint found" 错误，我们对项目结构进行了调整以符合 Vercel 的 Serverless Function 规范。
 
-## 🏗️ 架构概览
+## 1. 项目变更说明
 
-由于 Vercel Serverless Functions 的无状态特性和只读文件系统限制，我们对代码进行了适配：
-1.  **Backend (FastAPI)**: 部署在 Vercel。
-    *   所有的文件写入操作（如 SQLite 数据库、上传的临时文件）都已指向 `/tmp` 目录（这是 Vercel 唯一可写的临时目录）。
-    *   通过 HTTP API 提供服务。
-2.  **Frontend (Streamlit)**: 部署在 Streamlit Cloud。
-    *   通过 `BACKEND_URL` 环境变量连接到 Vercel 后端。
+我们添加了以下文件来适配 Vercel 的部署环境：
 
----
+- **`api/index.py`**: 这是 Vercel 识别的 Python 入口文件。它负责将请求转发给 `backend/main.py` 中的 FastAPI 应用。
+- **`vercel.json`**: Vercel 的配置文件，定义了路由重写规则，确保所有 API 请求都指向 `api/index.py`。
+- **`backend/__init__.py`**: 使 backend 目录成为一个 Python 包，以便在 `api/index.py` 中可以正确导入。
 
-## ✅ 准备工作
+## 2. 部署步骤
 
-1.  **GitHub 账号**: 拥有此项目的代码仓库。
-2.  **Vercel 账号**: 用于部署后端 ([vercel.com](https://vercel.com))。
-3.  **Streamlit Cloud 账号**: 用于部署前端 ([share.streamlit.io](https://share.streamlit.io))。
-4.  **API Keys**:
-    *   `GOOGLE_API_KEY` (必填，用于 Gemini 模型)
-    *   `BRIGHT_DATA_API_KEY` (可选，用于网络搜索)
-    *   `PAPER_SEARCH_API_KEY` (可选，用于论文检索)
+### 第一步：推送到 GitHub
+确保你已经将最新的代码（包括上述新文件）推送到你的 GitHub 仓库。
 
----
+### 第二步：在 Vercel 上创建项目
+1. 登录 [Vercel Dashboard](https://vercel.com/dashboard)。
+2. 点击 "Add New..." -> "Project"。
+3. 导入你的 `LangChain-Learning` 仓库。
 
-## 🚀 第一步：部署后端 (Vercel)
+### 第三步：配置项目
+在 "Configure Project" 页面：
 
-### 1. 检查项目文件
-确保你的 GitHub 仓库根目录下包含以下关键文件：
-*   `requirements.txt`: 包含 `fastapi`, `uvicorn`, `langchain` 等依赖。
-*   `vercel.json`: 配置重写规则，将请求转发给 `backend/main.py`。
-    *   *内容确认*:
-        ```json
-        {
-          "rewrites": [{ "source": "/(.*)", "destination": "/backend/main.py" }]
-        }
-        ```
+1. **Framework Preset**: 选择 "Other" (或者如果 Vercel 自动检测到 Python 也可以，但通常默认即可)。
+2. **Root Directory**:
+   - 点击 "Edit"。
+   - 选择 `My-Chat-LangChain` 目录作为项目的根目录。
+   - **重要**: 必须选择 `My-Chat-LangChain`，因为 `vercel.json` 和 `api/` 目录都在这里。
 
-### 2. 导入项目到 Vercel
-1.  登录 Vercel 控制台。
-2.  点击 **"Add New..."** -> **"Project"**。
-3.  选择包含 `My-Chat-LangChain` 代码的 GitHub 仓库并点击 **"Import"**。
+3. **Environment Variables (环境变量)**:
+   展开 "Environment Variables" 部分，添加你在 `.env` 文件中使用的所有变量，例如：
+   - `GOOGLE_API_KEY`
+   - `HUGGINGFACEHUB_API_TOKEN`
+   - 以及其他后端需要的 API Key。
 
-### 3. 配置部署设置 (Configure Project)
-*   **Root Directory (根目录)**:
-    *   如果你的仓库直接就是项目文件（即 `requirements.txt` 在仓库根目录），保持默认 `./`。
-    *   如果项目在子文件夹（例如仓库叫 `LangChain-Learning`，代码在 `My-Chat-LangChain` 下），请点击 **Edit** 并选择 `My-Chat-LangChain` 目录。
-*   **Framework Preset**: 选择 **FastAPI** 或保持默认 (Vercel 通常会自动检测 Python 环境)。
-*   **Build & Output Settings**: 保持默认。
+### 第四步：部署
+点击 "Deploy" 按钮。Vercel 将开始构建和部署你的应用。
 
-### 4. 设置环境变量 (Environment Variables)
-在 **"Environment Variables"** 部分，添加以下变量：
+## 3. 验证部署
+部署完成后，Vercel 会提供一个访问域（例如 `https://your-project.vercel.app`）。
+你可以尝试访问 API 文档路径来验证后端是否正常运行：
+- `https://your-project.vercel.app/docs`
 
-| Key | Value (示例) | 说明 |
-| :--- | :--- | :--- |
-| `GOOGLE_API_KEY` | `AIzaSy...` | **必填**。Gemini 模型密钥。 |
-| `BRIGHT_DATA_API_KEY` | `...` | 可选。用于高级搜索 MCP 工具。 |
-| `PAPER_SEARCH_API_KEY` | `...` | 可选。用于论文搜索 MCP 工具。 |
+## 常见问题
+- **依赖安装慢**: Vercel 的构建时间有限制。如果依赖项非常多（特别是像 torch 这种大型库），可能会导致超时。目前的 `requirements.txt` 看起来是标准的，应该没问题。
+- **ChromaDB**: ChromaDB 是一个基于文件的向量数据库。在 Vercel 的 Serverless 环境中，文件系统是临时的（ephemeral）。这意味着**重新部署后，数据库中的数据会丢失**。如果你需要持久化存储，建议使用 ChromaDB 的 Client-Server 模式（连接到远程服务器）或其他云端向量数据库（如 Pinecone）。
 
-> ⚠️ **注意**: 不需要设置 `BACKEND_URL`，因为这是后端自己。
-
-### 5. 点击 Deploy
-*   点击 **"Deploy"** 按钮。
-*   等待构建完成（Install Dependencies 可能需要几分钟）。
-*   部署成功后，你会获得一个 **Project Domains**（例如 `https://my-chat-langchain-alpha.vercel.app`）。
-*   **测试**: 访问 `https://<你的域名>/docs`。如果看到 Swagger UI 界面，说明后端部署成功！
-*   👉 **复制这个域名**，下一步前端部署需要用到。
-
----
-
-## 🎨 第二步：部署前端 (Streamlit Cloud)
-
-### 1. 导入项目
-1.  登录 [Streamlit Cloud](https://share.streamlit.io/)。
-2.  点击 **"New app"**。
-3.  **Repository**: 选择同一个 GitHub 仓库。
-4.  **Branch**: `main` (或你开发的分支)。
-
-### 2. 配置主文件路径
-*   **Main file path**: 输入 `frontend/app.py`。
-    *   *注意*: 这里的路径是相对于你第一步选择的 Repository 根目录的。如果之前在 Vercel 设置了子目录作为 Root，这里要在仓库层级找到该文件。
-
-### 3. 配置 Secrets (环境变量)
-点击 **"Advanced settings..."**，在 **Secrets** 输入框中添加以下 TOML 格式配置：
-
-```toml
-# Vercel 后端地址 (必填，末尾不要带斜杠 /)
-BACKEND_URL = "https://my-chat-langchain-alpha.vercel.app"
-
-# 可选：如果想预置 Key 方便前端直接使用，可以在这里添加
-# BRIGHT_DATA_API_KEY = "xxx"
-# PAPER_SEARCH_API_KEY = "xxx"
-```
-
-### 4. 点击 Deploy
-*   点击 **"Deploy!"** 按钮。
-*   等待应用启动。Streamlit 会自动安装 `requirements.txt` 中的依赖。
-
----
-
-## 📝 限制与注意事项
-
-1.  **Vercel 函数超时**:
-    *   Vercel Hobby (免费版) 的 Serverless Function 执行超时时间通常为 **10秒** (有时可配置到 60秒)。
-    *   **影响**: 如果上传特别大的 PDF 文件进行 RAG 索引，或者执行非常复杂的 Agent 搜索任务，可能会因为超时导致前端报错 (504 Gateway Timeout)。
-    *   **建议**: 仅用于演示或处理轻量级任务（小文件、简单搜索）。
-
-2.  **临时存储 (/tmp)**:
-    *   由于使用了 Serverless 架构，`/tmp` 目录下的文件（上传的文件、SQLite 数据库）是**临时的**。
-    *   一段时间不活动后，实例会被销毁，**聊天记录和知识库索引将会丢失**。这是 Serverless 的特性。如果需要持久化存储，建议对接云数据库 (如 MongoDB Atlas, Supabase)。
-
-3.  **依赖包体积**:
-    *   Vercel 对 Serverless Function 的包体积有限制 (250MB)。如果添加了过多大型 Python 库（如 pytorch, heavy transformers），可能会导致部署失败。目前的 `requirements.txt` 包含了 `sentence-transformers` 和 `chromadb`，体积较大，勉强可能在边缘。如果部署失败，请尝试精简依赖。
+## 前端部署 (可选)
+该项目包含一个基于 Streamlit 的前端。Streamlit 应用通常部署在 [Streamlit Cloud](https://streamlit.io/cloud) 上，而不是 Vercel。
+如果你想部署前端：
+1. 在 Streamlit Cloud 上创建一个新应用。
+2. 仓库连接到同一个 GitHub 仓库。
+3. "Main file path" 设置为 `My-Chat-LangChain/frontend/app.py`。
+4. 记得在 Streamlit Cloud 的设置中配置 `BACKEND_URL` 环境变量，指向你在 Vercel 上部署的后端地址。
