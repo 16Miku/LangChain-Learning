@@ -1,3 +1,8 @@
+# Patch sqlite3 with pysqlite3-binary to satisfy chroma requirements on Vercel
+__import__('pysqlite3')
+import sys
+sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
