@@ -23,6 +23,7 @@ sentence-transformers
 
 # Database
 aiosqlite
+pysqlite3-binary
 
 # MCP
 langchain-mcp-adapters
