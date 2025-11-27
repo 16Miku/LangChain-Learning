@@ -1,0 +1,31 @@
+fastapi
+uvicorn
+python-multipart
+pydantic
+requests
+python-dotenv
+beautifulsoup4
+
+# LangChain & AI
+langchain
+langchain-community
+langchain-core
+langchain-google-genai
+langchain-huggingface
+langchain-chroma
+langgraph
+
+# Vector Store & RAG
+chromadb
+pypdf
+flashrank
+sentence-transformers
+
+# Database
+aiosqlite
+
+# MCP
+langchain-mcp-adapters
+
+# Frontend (for Streamlit Cloud)
+streamlit

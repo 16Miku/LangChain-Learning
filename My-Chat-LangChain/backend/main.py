@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 from typing import List, Dict, Any, Optional
@@ -17,8 +18,17 @@ app = FastAPI(
     version="6.0.0",
 )
 
+# --- CORS Configuration ---
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows all origins
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows all methods
+    allow_headers=["*"],  # Allows all headers
+)
+
 # --- Configuration ---
-TEMP_UPLOAD_DIR = "./temp_uploads"
+TEMP_UPLOAD_DIR = "/tmp/temp_uploads"
 os.makedirs(TEMP_UPLOAD_DIR, exist_ok=True)
 
 # --- Data Models ---

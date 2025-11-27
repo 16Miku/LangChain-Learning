@@ -6,7 +6,8 @@ import time
 import uuid
 
 # --- 1. API Config ---
-BACKEND_URL = "http://127.0.0.1:8000"
+# Read from Environment Variable for Cloud Deployment
+BACKEND_URL = os.environ.get("BACKEND_URL", "http://127.0.0.1:8000")
 STREAM_ENDPOINT = f"{BACKEND_URL}/chat/stream"
 UPLOAD_ENDPOINT = f"{BACKEND_URL}/upload_file"
 
@@ -82,8 +83,9 @@ with st.sidebar:
             with st.spinner("Uploading and Ingesting file..."):
                 try:
                     files = {'file': (uploaded_file.name, uploaded_file.getvalue(), uploaded_file.type)}
-                    # Explicitly bypass proxies for local requests
-                    proxies = {"http": None, "https": None}
+                    # Only bypass proxies if running locally (localhost/127.0.0.1)
+                    proxies = {"http": None, "https": None} if "127.0.0.1" in BACKEND_URL or "localhost" in BACKEND_URL else None
+                    
                     response = requests.post(UPLOAD_ENDPOINT, files=files, proxies=proxies)
                     
                     if response.status_code == 200:
@@ -143,8 +145,8 @@ def stream_generator(prompt):
     }
     
     try:
-        # Explicitly bypass proxies for local requests
-        proxies = {"http": None, "https": None}
+        # Only bypass proxies if running locally (localhost/127.0.0.1)
+        proxies = {"http": None, "https": None} if "127.0.0.1" in BACKEND_URL or "localhost" in BACKEND_URL else None
         
         with requests.post(STREAM_ENDPOINT, json=payload, stream=True, proxies=proxies) as response:
             response.raise_for_status()

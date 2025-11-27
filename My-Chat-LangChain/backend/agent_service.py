@@ -34,7 +34,8 @@ _mcp_tools = []
 _sqlite_conn = None
 
 # --- Persistence Config ---
-DB_PATH = "./data/state.db"
+# On Vercel, only /tmp is writable
+DB_PATH = "/tmp/data/state.db"
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 SYSTEM_PROMPT = """

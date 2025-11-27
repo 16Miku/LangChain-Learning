@@ -43,7 +43,8 @@ async def ingest_knowledge(source: str, type: str):
         # For simplicity in this tool, we might need the full path.
         # Let's assume 'source' passed by Agent is the filename user sees.
         # We need to look it up in a temp dir.
-        temp_dir = "./temp_uploads" 
+        # On Vercel, only /tmp is writable
+        temp_dir = "/tmp/temp_uploads" 
         filepath = os.path.join(temp_dir, source)
         
         if os.path.exists(filepath):
