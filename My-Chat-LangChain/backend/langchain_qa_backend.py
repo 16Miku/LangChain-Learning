@@ -35,8 +35,9 @@ if "GOOGLE_API_KEY" not in os.environ:
 
 # --- Configuration ---
 # Vercel (Serverless) only allows writing to /tmp
-# Note: Data in /tmp is ephemeral and will be lost on cold starts.
-VECTOR_STORE_PATH = "/tmp/data/vector_store"
+# Render allows persistent storage if configured
+DATA_DIR = os.environ.get("DATA_DIR", "/tmp/data")
+VECTOR_STORE_PATH = os.path.join(DATA_DIR, "vector_store")
 EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
 
 # Singleton Global Vector Store

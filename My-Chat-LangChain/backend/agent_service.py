@@ -35,7 +35,9 @@ _sqlite_conn = None
 
 # --- Persistence Config ---
 # On Vercel, only /tmp is writable
-DB_PATH = "/tmp/data/state.db"
+# On Render (with Persistent Disk), we should use the mount path (e.g., /data)
+DATA_DIR = os.environ.get("DATA_DIR", "/tmp/data")
+DB_PATH = os.path.join(DATA_DIR, "state.db")
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 SYSTEM_PROMPT = """

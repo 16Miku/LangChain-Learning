@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: my-chat-langchain
+    runtime: docker
+    plan: free
+    rootDir: My-Chat-LangChain
+    envVars:
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: BRIGHT_DATA_API_KEY
+        sync: false
+      - key: PAPER_SEARCH_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: DATA_DIR
+        value: /var/lib/data
+    disk:
+      name: chat-data
+      mountPath: /var/lib/data
+      sizeGB: 1
