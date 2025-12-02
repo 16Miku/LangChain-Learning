@@ -69,7 +69,7 @@ v6.0 架构的核心是引入了 **Server-Sent Events (SSE)** 来实现服务器
     *   `uvicorn: 0.35.0`
     *   `python-multipart: 0.0.20`
     *   `streamlit: 1.46.1`
-    *   `requests: 2.32.4`
+    *   `requests: 2.32.5`及以上
     *   `aiosqlite: 0.21.0` (异步数据库操作)
 
 *   **LangChain 生态 (Agent & LLM):**
