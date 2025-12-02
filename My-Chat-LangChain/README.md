@@ -63,6 +63,26 @@ typora-copy-images-to: media
 
 
 
+## 在Render上部署
+
+
+[text](Deployment-Guide.md)
+
+
+
+[text](../render.yaml)
+
+
+
+[text](Dockerfile)
+
+
+
+[text](start.sh)
+
+
+
+[text](requirements.txt)
 
 
 
