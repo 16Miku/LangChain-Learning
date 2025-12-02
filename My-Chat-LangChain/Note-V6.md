@@ -67,6 +67,7 @@ v6.0 架构的核心是引入了 **Server-Sent Events (SSE)** 来实现服务器
 *   **Web 框架 (Backend & Frontend):**
     *   `fastapi: 0.116.1`
     *   `uvicorn: 0.35.0`
+    *   `python-multipart: 0.0.20`
     *   `streamlit: 1.46.1`
     *   `requests: 2.32.4`
     *   `aiosqlite: 0.21.0` (异步数据库操作)
@@ -77,8 +78,12 @@ v6.0 架构的核心是引入了 **Server-Sent Events (SSE)** 来实现服务器
     *   `langchain-community: 0.3.29`
     *   `langchain-google-genai: 2.1.9` (作为示例)
     *   `langgraph: 0.6.6`
+    *   `langgraph-checkpoint: 2.1.0`
+    *   `langgraph-checkpoint-sqlite: 2.0.10`
+    *   `langsmith: 0.3.45`
 
 *   **RAG (检索增强生成):**
+    *   `chromadb: 1.0.20`
     *   `langchain-chroma: 0.2.5` (向量数据库)
     *   `langchain-huggingface: 0.3.1`
     *   `sentence-transformers: 5.1.1` (文本嵌入模型)
