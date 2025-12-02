@@ -15,7 +15,3 @@ services:
         sync: false
       - key: DATA_DIR
         value: /var/lib/data
-    disk:
-      name: chat-data
-      mountPath: /var/lib/data
-      sizeGB: 1

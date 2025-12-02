@@ -1,76 +1,106 @@
-# Vercel 部署指南 (中文版)
+# My-Chat-LangChain Render 部署指南
 
-为了解决 Vercel 部署时出现的 "Error: No fastapi entrypoint found" 错误，我们对项目结构进行了调整以符合 Vercel 的 Serverless Function 规范。
+本指南详细说明如何将 My-Chat-LangChain 部署到 Render 平台。项目支持两种部署模式：**无状态模式 (免费层)** 和 **持久化模式 (付费层)**。
 
-## 1. 项目变更说明
+## 部署模式概览
 
-我们添加了以下文件来适配 Vercel 的部署环境：
+| 特性 | 方案 2: 无状态模式 (默认) | 方案 1: 持久化模式 (升级) |
+| :--- | :--- | :--- |
+| **适用场景** | 测试、演示、免费体验 | 生产环境、需要保存数据 |
+| **Render 方案** | Free Tier (免费) | Starter ($7/mo) + Disk ($0.25/GB/mo) |
+| **数据持久性** | **无** (重启后数据丢失) | **有** (数据保存在持久化磁盘) |
+| **配置复杂度** | 低 | 中 (需配置磁盘) |
 
-- **`api/index.py`**: 这是 Vercel 识别的 Python 入口文件。它负责将请求转发给 `backend/main.py` 中的 FastAPI 应用。
-- **`vercel.json`**: Vercel 的配置文件，定义了路由重写规则，确保所有 API 请求都指向 `api/index.py`。
-- **`backend/__init__.py`**: 使 backend 目录成为一个 Python 包，以便在 `api/index.py` 中可以正确导入。
-- **`.vercelignore`**: 指定 Vercel 部署时忽略的文件和文件夹，防止因项目体积过大导致部署失败。
+---
 
-## 2. 部署步骤
+## 快速开始：部署方案 2 (免费/无状态)
 
-### 第一步：推送到 GitHub
-确保你已经将最新的代码（包括上述新文件）推送到你的 GitHub 仓库。
+此方案完全兼容 Render 的免费实例类型，适合快速体验和演示。
 
-### 第二步：在 Vercel 上创建项目
-1. 登录 [Vercel Dashboard](https://vercel.com/dashboard)。
-2. 点击 "Add New..." -> "Project"。
-3. 导入你的 `LangChain-Learning` 仓库。
+### 1. 准备工作
+- 确保代码已推送到 GitHub。
+- 准备好必要的 API Keys (`GOOGLE_API_KEY`, `OPENAI_API_KEY` 等)。
 
-### 第三步：配置项目
-在 "Configure Project" 页面：
+### 2. 部署步骤 (使用 Blueprint)
+本项目包含 `render.yaml`，推荐使用 Render Blueprint 自动部署。
 
-1. **Framework Preset**: 选择 "Other" (或者如果 Vercel 自动检测到 Python 也可以，但通常默认即可)。
-2. **Root Directory**:
-   - 点击 "Edit"。
-   - 选择 `My-Chat-LangChain` 目录作为项目的根目录。
-   - **重要**: 必须选择 `My-Chat-LangChain`，因为 `vercel.json` 和 `api/` 目录都在这里。
+1. 登录 [Render Dashboard](https://dashboard.render.com/)。
+2. 点击 **"New +"** 按钮，选择 **"Blueprint"**。
+3. 连接包含本项目的 GitHub 仓库。
+4. Render 会自动检测 `render.yaml` 配置文件。
+5. 点击 **"Apply"** 开始创建服务。
 
-3. **Environment Variables (环境变量)**:
-   展开 "Environment Variables" 部分，添加你在 `.env` 文件中使用的所有变量，例如：
-   - `GOOGLE_API_KEY`
-   - `HUGGINGFACEHUB_API_TOKEN`
-   - 以及其他后端需要的 API Key。
+### 3. 环境变量配置
+在创建过程中或创建后，请在 Render 控制台的 **"Environment"** 标签页中检查并填入以下变量：
 
-### 第四步：部署
-点击 "Deploy" 按钮。Vercel 将开始构建和部署你的应用。
+| Key | 说明 |
+| :--- | :--- |
+| `GOOGLE_API_KEY` | Google API Key (用于搜索功能) |
+| `BRIGHT_DATA_API_KEY` | Bright Data API Key (可选) |
+| `PAPER_SEARCH_API_KEY` | 论文搜索 API Key (可选) |
+| `OPENAI_API_KEY` | OpenAI API Key (用于 LLM) |
+| `DATA_DIR` | 默认设置为 `/var/lib/data` (无需修改) |
 
-## 3. 验证部署
-部署完成后，Vercel 会提供一个访问域（例如 `https://your-project.vercel.app`）。
-你可以尝试访问 API 文档路径来验证后端是否正常运行：
-- `https://your-project.vercel.app/docs`
+### 4. 验证部署
+部署完成后，访问 Render 提供的 URL。应用应正常启动。
+**注意：** 在此模式下上传的文件、创建的向量数据库 (ChromaDB) 或生成的日志，**在应用重启或重新部署后将会丢失**。
 
-## 常见问题与故障排除
+---
 
-### 1. 部署失败：RangeError [ERR_OUT_OF_RANGE] (Size Limit Exceeded)
-**现象**: 部署时出现类似 `RangeError [ERR_OUT_OF_RANGE]: The value of "size" is out of range... Received 4_365_815_886` 的错误。
-**原因**: 项目体积过大（例如 4GB+），超出了 Vercel 的构建限制。通常是因为本地的向量数据库文件（ChromaDB）或大文件被包含在了上传列表中。
-**解决方法**:
-1. **使用 .vercelignore**: 我们已经添加了 `.vercelignore` 文件，明确忽略了 `backend/chroma_db_*`、`chroma_langchain_db/`、`backend/data/` 等大文件夹。
-2. **检查 Git 历史**: 如果这些大文件曾经被提交到 Git 历史中，Vercel 可能会从 Git 拉取它们。
-   - 运行 `git status` 检查是否有未忽略的大文件。
-   - 如果大文件已被追踪，请运行以下命令将它们从 Git 索引中移除（但保留本地文件）：
-     ```bash
-     git rm -r --cached My-Chat-LangChain/backend/chroma_db_*
-     git rm -r --cached My-Chat-LangChain/backend/data/
-     git rm -r --cached My-Chat-LangChain/chroma_langchain_db/
-     git commit -m "Stop tracking large data files"
-     git push
-     ```
+## 升级指南：切换到方案 1 (付费/持久化)
 
-### 2. 依赖安装慢
-Vercel 的构建时间有限制。如果依赖项非常多（特别是像 torch 这种大型库），可能会导致超时。目前的 `requirements.txt` 看起来是标准的，应该没问题。
+如果你需要保存 ChromaDB 向量库、上传的文件或对话历史，请按以下步骤升级到持久化模式。
 
-### 3. ChromaDB 数据丢失
-ChromaDB 是一个基于文件的向量数据库。在 Vercel 的 Serverless 环境中，文件系统是临时的（ephemeral）。这意味着**重新部署后，数据库中的数据会丢失**。如果你需要持久化存储，建议使用 ChromaDB 的 Client-Server 模式（连接到远程服务器）或其他云端向量数据库（如 Pinecone）。
+### 1. 升级实例类型
+Render Free Tier 不支持挂载磁盘 (Disk)。
+1. 在 Render Dashboard 进入你的服务页面。
+2. 点击 **"Settings"**。
+3. 在 **"Instance Type"** 部分，选择 **"Starter"** ($7/mo) 或更高配置。
+4. 点击 **"Save Changes"**。
 
-## 前端部署 (可选)
-该项目包含一个基于 Streamlit 的前端。Streamlit 应用通常部署在 [Streamlit Cloud](https://streamlit.io/cloud) 上，而不是 Vercel。
-如果你想部署前端：
-1. 在 Streamlit Cloud 上创建一个新应用。
-2. 仓库连接到同一个 GitHub 仓库。
-3. "Main file path" 设置为 `My-Chat-LangChain/frontend/app.py`。
+### 2. 添加持久化磁盘 (Persistent Disk)
+1. 在服务页面的侧边栏选择 **"Disks"**。
+2. 点击 **"Add Disk"**。
+3. 配置磁盘参数：
+   - **Name**: `chat-data` (建议命名)
+   - **Mount Path**: `/var/lib/data` (**必须完全匹配此路径**)
+   - **Size**: 根据需要选择 (例如 1GB)
+4. 点击 **"Create Disk"**。
+
+Render 将会自动重新部署服务并挂载磁盘。此时，写入 `/var/lib/data` 的所有数据都将被持久化保存。
+
+### 3. (可选) 通过 `render.yaml` 更新
+如果你更喜欢通过代码管理配置 (IaC)，可以修改项目根目录下的 `render.yaml`，将配置更新为：
+
+```yaml
+services:
+  - type: web
+    name: my-chat-langchain
+    runtime: docker
+    plan: starter  # 将 free 改为 starter 或其他付费计划
+    # ... (其他配置保持不变) ...
+    disk:
+      name: chat-data
+      mountPath: /var/lib/data
+      sizeGB: 1
+```
+
+提交并推送代码后，Render Blueprint 将自动应用变更（可能需要在 Dashboard 确认支付信息）。
+
+---
+
+## 常见问题 (FAQ)
+
+### Q: 为什么应用重启后我的知识库没了？
+**A:** 如果你使用的是**方案 2 (免费层)**，这是预期行为。Docker 容器的文件系统是临时的，重启后会重置。如需保存数据，请参考"升级指南"切换到方案 1 并挂载磁盘。
+
+### Q: 部署失败，提示 SQLite 版本过低？
+**A:** LangChain/ChromaDB 对 SQLite 版本有要求。本项目已在 `backend/main.py` 中集成了 `pysqlite3-binary` 补丁，确保在 Linux 环境下覆盖系统默认的 SQLite。**请确保不要删除 `main.py` 顶部的相关补丁代码。**
+
+### Q: 为什么我在本地运行正常，Render 上报错？
+**A:** 请检查 Render 的 **Logs**。常见原因包括：
+1. **环境变量缺失**：确保所有 API Key 都已正确设置。
+2. **内存不足**：Free Tier 限制 512MB RAM。如果遇到 `OOM Killed` 或 `Out Of Memory` 错误，可能需要升级实例类型。
+
+### Q: 部署需要多长时间？
+**A:** 首次构建 Docker 镜像可能需要几分钟。后续部署如果利用了缓存会更快。
