@@ -66,23 +66,23 @@ typora-copy-images-to: media
 ## 在Render上部署
 
 
-[text](Deployment-Guide.md)
+[My-Chat-LangChain\Deployment-Guide.md](Deployment-Guide.md)
 
 
 
-[text](../render.yaml)
+[render.yaml](../render.yaml)
 
 
 
-[text](Dockerfile)
+[My-Chat-LangChain\Dockerfile](Dockerfile)
 
 
 
-[text](start.sh)
+[My-Chat-LangChain\start.sh](start.sh)
 
 
 
-[text](requirements.txt)
+[My-Chat-LangChain\requirements.txt](requirements.txt)
 
 
 
