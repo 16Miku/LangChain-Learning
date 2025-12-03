@@ -13,6 +13,18 @@ from agent_service import chat_with_agent, chat_with_agent_stream
 # Import RAG backend functions
 from langchain_qa_backend import ingest_file
 
+
+import logging
+logging.getLogger("mcp").setLevel(logging.ERROR)
+logging.getLogger("root").setLevel(logging.ERROR)
+# 细微优化
+# 之前日志中有个小 Warning：
+# WARNING:root:Failed to validate notification: 11 validation errors...
+# 这是 MCP 协议的底层日志，不影响业务，但看着心烦。可以通过调整 logging 级别来屏蔽：
+
+
+
+
 app = FastAPI(
     title="Stream-Agent Backend API",
     description="An API for the Unified Agent application powered by LangChain and Google Gemini.",
