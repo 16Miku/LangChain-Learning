@@ -136,7 +136,18 @@ def stream_generator(prompt):
     """
     Generator that yields chunks from the backend SSE stream.
     Handles both text tokens and tool events.
+    All data from backend is base64 encoded to handle newlines safely.
     """
+    import base64
+    
+    def decode_sse_data(encoded_data: str) -> str:
+        """Decode base64 encoded SSE data."""
+        try:
+            return base64.b64decode(encoded_data.encode('ascii')).decode('utf-8')
+        except Exception:
+            # Fallback: return as-is if decoding fails
+            return encoded_data
+    
     active_keys = {k: v for k, v in st.session_state.api_keys.items() if v}
     payload = {
         "message": prompt,
@@ -154,10 +165,7 @@ def stream_generator(prompt):
             # Streamlit's status container for tool outputs
             status_container = st.status("Thinking...", expanded=True)
             
-            # Standard requests.iter_lines() splits by \n.
-            # SSE sends "event: ...\ndata: ...\n\n"
-            # We need a slightly smarter parser or assumption.
-            
+            # SSE Parser: event type is stored and applied to next data line
             event_type = None
             
             for line in response.iter_lines():
@@ -172,24 +180,32 @@ def stream_generator(prompt):
                     event_type = decoded_line[7:].strip()
                 
                 elif decoded_line.startswith("data: "):
-                    data = decoded_line[6:]
+                    raw_data = decoded_line[6:]
                     
-                    if event_type == "tool_start":
-                        status_container.write(f"🛠️ Calling Tool: **{data}**...")
+                    if event_type == "text":
+                        # Text content - decode base64 and yield for streaming display
+                        text_content = decode_sse_data(raw_data)
+                        yield text_content
+                    
+                    elif event_type == "tool_start":
+                        # Tool start event - decode and display
+                        tool_name = decode_sse_data(raw_data)
+                        status_container.write(f"🛠️ Calling Tool: **{tool_name}**...")
                     
                     elif event_type == "tool_end":
+                        # Tool end event - decode JSON and display result
                         try:
-                            tool_data = json.loads(data)
+                            decoded_json = decode_sse_data(raw_data)
+                            tool_data = json.loads(decoded_json)
                             status_container.markdown(f"✅ **{tool_data['name']}** finished.")
                             with status_container.expander(f"Result ({tool_data['name']})"):
                                 st.code(tool_data['output'])
-                        except:
+                        except Exception:
                             status_container.write("Tool finished.")
-                            
-                    else:
-                        # Default text content (no event type or event='on_chat_model_stream')
-                        # Yield text for st.write_stream
-                        yield data
+                    
+                    elif event_type == "done":
+                        # Stream finished signal, don't yield anything
+                        pass
 
             status_container.update(label="Finished thinking!", state="complete", expanded=False)
             

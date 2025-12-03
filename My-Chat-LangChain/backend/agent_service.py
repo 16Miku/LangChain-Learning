@@ -298,7 +298,45 @@ async def chat_with_agent(message: str, thread_id: str, api_keys: Dict[str, str]
 async def chat_with_agent_stream(message: str, thread_id: str, api_keys: Dict[str, str] = None):
     """
     Generator function for streaming agent responses and thoughts.
+    Uses base64 encoding to ensure SSE data integrity (handles newlines in content).
     """
+    import base64
+    import json
+    
+    def encode_sse_data(data: str) -> str:
+        """Base64 encode data to avoid SSE newline issues."""
+        return base64.b64encode(data.encode('utf-8')).decode('ascii')
+    
+    def extract_text_content(content) -> str:
+        """
+        Extract text from Gemini's chunk.content which may be:
+        - A simple string
+        - A list of content parts (e.g., [{'type': 'text', 'text': '...'}])
+        - None or empty
+        """
+        if content is None:
+            return ""
+        
+        if isinstance(content, str):
+            return content
+        
+        if isinstance(content, list):
+            # Handle list of content parts (Gemini format)
+            text_parts = []
+            for part in content:
+                if isinstance(part, str):
+                    text_parts.append(part)
+                elif isinstance(part, dict):
+                    # Extract text from dict-like content part
+                    if 'text' in part:
+                        text_parts.append(part['text'])
+                    elif 'content' in part:
+                        text_parts.append(str(part['content']))
+            return ''.join(text_parts)
+        
+        # Fallback: convert to string
+        return str(content) if content else ""
+    
     if api_keys:
         await initialize_agent(api_keys)
     
@@ -314,19 +352,37 @@ async def chat_with_agent_stream(message: str, thread_id: str, api_keys: Dict[st
         kind = event["event"]
         
         # Yield different event types for the frontend to consume
+        # All data is base64 encoded to handle newlines safely
         if kind == "on_chat_model_stream":
-            content = event["data"]["chunk"].content
-            if content:
-                yield f"data: {content}\n\n"
+            raw_content = event["data"]["chunk"].content
+            text_content = extract_text_content(raw_content)
+            if text_content:
+                encoded_data = encode_sse_data(text_content)
+                yield f"event: text\ndata: {encoded_data}\n\n"
         
         elif kind == "on_tool_start":
             tool_name = event["name"]
-            yield f"event: tool_start\ndata: {tool_name}\n\n"
+            encoded_data = encode_sse_data(tool_name)
+            yield f"event: tool_start\ndata: {encoded_data}\n\n"
             
         elif kind == "on_tool_end":
             tool_name = event["name"]
-            output = str(event["data"].get("output"))
+            output = str(event["data"].get("output", ""))
             # Truncate long outputs for display
-            safe_output = (output[:200] + '...') if len(output) > 200 else output
-            # JSON encoded to avoid newline issues in SSE
-            import json
+            safe_output = (output[:1000] + '...') if len(output) > 1000 else output
+            tool_data = json.dumps({"name": tool_name, "output": safe_output}, ensure_ascii=False)
+            encoded_data = encode_sse_data(tool_data)
+            yield f"event: tool_end\ndata: {encoded_data}\n\n"
+    
+    # Send stream end marker
+    yield f"event: done\ndata: complete\n\n"
+
+
+async def cleanup():
+    """Cleanup function to close database connection."""
+    global _sqlite_conn, _mcp_client
+    if _sqlite_conn:
+        await _sqlite_conn.close()
+        _sqlite_conn = None
+    if _mcp_client:
+        _mcp_client = None
