@@ -65,6 +65,9 @@ typora-copy-images-to: media
 
 ## 在Render上部署
 
+### 部署链接
+
+*   https://my-chat-langchain.onrender.com/
 
 [My-Chat-LangChain\Deployment-Guide.md](Deployment-Guide.md)
 
@@ -87,6 +90,12 @@ typora-copy-images-to: media
 
 
 
+
+
+
+## My-Chat-LangChain 应用说明书 v7.0 (引入Agent)
+
+[My-Chat-LangChain\Note-V7.md](Note-V7.md)
 
 
 

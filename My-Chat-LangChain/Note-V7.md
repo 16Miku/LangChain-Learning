@@ -150,6 +150,10 @@ Agent 的能力来源于其庞大的工具箱，这些工具定义在 `backend/a
     *   看到 `Uvicorn running on http://0.0.0.0:10000` 表示后端启动成功。
     *   点击 Render 提供的 URL 访问应用。
 
+5. **部署链接**：
+
+    *   https://my-chat-langchain.onrender.com/
+
 ### 4.3 启用数据持久化
 
 为防止数据丢失（尤其是在付费计划上），必须挂载持久化磁盘：
