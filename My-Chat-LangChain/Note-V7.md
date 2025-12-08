@@ -197,10 +197,10 @@ streamlit run app.py
 
 
     
-[![Watch search_asuka.mp4](media/Snipaste_2025-12-02_14-00-39.png)](https://raw.githubusercontent.com/16Miku/LangChain-Learning/master/My-Chat-LangChain/media/search_asuka.mp4)
+![Watch search_asuka.mp4](https://raw.githubusercontent.com/16Miku/LangChain-Learning/master/My-Chat-LangChain/media/search_asuka.mp4)
 
 
-[![Watch search_teresa.mp4](media/Snipaste_2025-12-02_14-00-45.png)](https://raw.githubusercontent.com/16Miku/LangChain-Learning/master/My-Chat-LangChain/media/search_teresa.mp4)
+![Watch search_teresa.mp4](https://raw.githubusercontent.com/16Miku/LangChain-Learning/master/My-Chat-LangChain/media/search_teresa.mp4)
 
 
 
