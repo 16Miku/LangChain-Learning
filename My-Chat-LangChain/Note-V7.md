@@ -196,11 +196,11 @@ streamlit run app.py
 ## 6. 运行演示
 
 
+    
+[![Watch search_asuka.mp4](media/Snipaste_2025-12-02_14-00-39.png)](https://raw.githubusercontent.com/16Miku/LangChain-Learning/master/My-Chat-LangChain/media/search_asuka.mp4)
 
-<video controls src="https://raw.githubusercontent.com/16Miku/LangChain-Learning/master/My-Chat-LangChain/media/search_asuka.mp4" title="Title"></video>
 
-
-<video controls src="https://raw.githubusercontent.com/16Miku/LangChain-Learning/master/My-Chat-LangChain/media/search_teresa.mp4" title="Title"></video>
+[![Watch search_teresa.mp4](media/Snipaste_2025-12-02_14-00-45.png)](https://raw.githubusercontent.com/16Miku/LangChain-Learning/master/My-Chat-LangChain/media/search_teresa.mp4)
 
 
 
