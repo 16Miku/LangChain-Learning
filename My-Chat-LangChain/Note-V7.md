@@ -197,10 +197,10 @@ streamlit run app.py
 
 
 
-<video controls src="media/search_asuka.mp4" title="Title"></video>
+<video controls src="https://raw.githubusercontent.com/16Miku/LangChain-Learning/master/My-Chat-LangChain/media/search_asuka.mp4" title="Title"></video>
 
 
-<video controls src="media/search_teresa.mp4" title="Title"></video>
+<video controls src="https://raw.githubusercontent.com/16Miku/LangChain-Learning/master/My-Chat-LangChain/media/search_teresa.mp4" title="Title"></video>
 
 
 
