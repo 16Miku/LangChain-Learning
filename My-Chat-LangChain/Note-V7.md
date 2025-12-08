@@ -195,12 +195,11 @@ streamlit run app.py
 
 ## 6. 运行演示
 
+### 搜索 Asuka 演示
+![搜索 斋藤飞鸟 演示](media/search_asuka.gif)
 
-    
-![Watch search_asuka.mp4](https://raw.githubusercontent.com/16Miku/LangChain-Learning/master/My-Chat-LangChain/media/search_asuka.mp4)
-
-
-![Watch search_teresa.mp4](https://raw.githubusercontent.com/16Miku/LangChain-Learning/master/My-Chat-LangChain/media/search_teresa.mp4)
+### 搜索 Teresa 演示
+![搜索 池田瑛纱 演示](media/search_teresa.gif)
 
 
 
