@@ -3,6 +3,18 @@
 > **版本**: V8.0
 > **日期**: 2025-12-17
 > **目标**: 为 My-Chat-LangChain 集成 E2B 云沙箱，实现安全的代码执行能力
+> **状态**: 🟡 开发中 (核心功能已完成，待测试优化)
+
+---
+
+## 📋 开发进度总览
+
+| 阶段 | 状态 | 完成度 |
+|------|------|--------|
+| 阶段 1: 基础集成 | ✅ 已完成 | 100% |
+| 阶段 2: 数据分析能力 | ✅ 已完成 | 100% |
+| 阶段 3: 前端增强 | ⚠️ 部分完成 | 70% |
+| 阶段 4: 测试与优化 | 🔴 待开始 | 0% |
 
 ---
 
@@ -89,17 +101,18 @@ My-Chat-LangChain 是一个全功能实时流式 Agentic RAG 平台，目前拥�
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 2.2 新增工具清单
+### 2.2 新增工具清单 ✅ 已实现
 
-| 工具名称 | 功能描述 | 触发场景 |
-|---------|---------|---------|
-| `execute_python_code` | 执行 Python 代码 | 数据分析、计算、验证代码 |
-| `execute_shell_command` | 执行 Shell 命令 | 查看文件、系统信息 |
-| `install_python_package` | 安装 Python 包 | 需要额外依赖时 |
-| `upload_data_to_sandbox` | 上传文件到沙箱 | 分析用户上传的数据文件 |
-| `download_file_from_sandbox` | 从沙箱下载文件 | 获取生成的结果文件 |
-| `create_visualization` | 生成可视化图表 | 数据可视化需求 |
-| `analyze_csv_data` | 快速分析 CSV | 数据探索 |
+| 工具名称 | 功能描述 | 触发场景 | 状态 |
+|---------|---------|---------|------|
+| `execute_python_code` | 执行 Python 代码 | 数据分析、计算、验证代码 | ✅ 已实现 |
+| `execute_shell_command` | 执行 Shell 命令 | 查看文件、系统信息 | ✅ 已实现 |
+| `install_python_package` | 安装 Python 包 | 需要额外依赖时 | ✅ 已实现 |
+| `upload_data_to_sandbox` | 上传文件到沙箱 | 分析用户上传的数据文件 | ✅ 已实现 |
+| `download_file_from_sandbox` | 从沙箱下载文件 | 获取生成的结果文件 | ✅ 已实现 |
+| `create_visualization` | 生成可视化图表 | 数据可视化需求 | ✅ 已实现 |
+| `analyze_csv_data` | 快速分析 CSV | 数据探索 | ✅ 已实现 |
+| `generate_chart_from_data` | 快速生成图表 | 简单图表需求 | ✅ 已实现 (新增) |
 
 ### 2.3 数据流设计
 
@@ -138,19 +151,27 @@ My-Chat-LangChain 是一个全功能实时流式 Agentic RAG 平台，目前拥�
 
 ## 三、实现细节
 
-### 3.1 依赖安装
+### 3.1 依赖安装 ✅ 已完成
 
 **文件**: `backend/requirements.txt`
 
 ```txt
-# 新增 E2B 依赖
+# 新增 E2B 依赖 ✅
 e2b>=1.0.0
-e2b-code-interpreter>=1.0.0  # 可选，专用代码解释器
+e2b-code-interpreter>=1.0.0
 ```
 
-### 3.2 E2B 工具模块
+> ⚠️ **注意**: 原计划使用 `e2b==1.2.5`，但该版本不存在，已改为 `>=1.0.0`
+
+### 3.2 E2B 工具模块 ✅ 已完成
 
 **新建文件**: `backend/tools/e2b_tools.py`
+
+> ⚠️ **实际实现与计划的差异**:
+> - 使用 `AsyncSandbox` 替代同步 `Sandbox`（支持异步操作）
+> - 使用 `sandbox.run_code()` 替代 `sandbox.commands.run()`（E2B Code Interpreter API）
+> - 添加了 `_get_lock()` 懒加载机制解决事件循环问题
+> - E2B v1 API 变更：`execution.logs.stdout` 返回字符串列表而非对象列表
 
 ```python
 import os
@@ -576,7 +597,7 @@ print("数据已加载完成，可以进行进一步分析。")
     return execute_python_code.invoke({"code": analysis_code})
 ```
 
-### 3.3 Agent Service 集成
+### 3.3 Agent Service 集成 ✅ 已完成
 
 **修改文件**: `backend/agent_service.py`
 
@@ -630,9 +651,9 @@ async def cleanup():
     await close_sandbox()
 ```
 
-### 3.4 System Prompt 更新
+### 3.4 System Prompt 更新 ✅ 已完成
 
-在 `SYSTEM_PROMPT` 中添加第 8 类工具：
+在 `SYSTEM_PROMPT` 中添加第 8 类工具（版本更新为 v7.0）：
 
 ```python
 ### 8️⃣ 代码执行工具 (E2B 云沙箱)
@@ -662,7 +683,7 @@ async def cleanup():
 4. 返回执行结果和测试输出
 ```
 
-### 3.5 环境变量配置
+### 3.5 环境变量配置 ✅ 已完成
 
 **更新文件**: `backend/.env`
 
@@ -680,13 +701,13 @@ E2B_API_KEY=your_e2b_api_key
 
 ---
 
-## 四、前端增强（可选）
+## 四、前端增强 ⚠️ 部分完成
 
-### 4.1 图表展示支持
+### 4.1 图表展示支持 ✅ 已完成
 
 **修改文件**: `frontend/app.py`
 
-在处理 tool_end 事件时，检测图表 Base64 并渲染：
+已添加 `render_content_with_images()` 和 `render_tool_output()` 函数处理 Base64 图片渲染。
 
 ```python
 elif event_type == "tool_end":
@@ -712,22 +733,30 @@ elif event_type == "tool_end":
                     st.markdown(clean_output)
 ```
 
-### 4.2 支持更多文件类型上传
+### 4.2 支持更多文件类型上传 ✅ 已完成
 
 **修改文件**: `frontend/app.py`
 
 ```python
-# 扩展支持的文件类型
+# 扩展支持的文件类型 ✅
 uploaded_file = st.file_uploader(
-    "上传文件",
-    type=["pdf", "txt", "csv", "xlsx", "xls", "json", "py"],
-    help="支持 PDF、文本、CSV、Excel、JSON、Python 文件"
+    "Upload file for analysis",
+    type=['pdf', 'csv', 'xlsx', 'xls', 'json', 'txt', 'py'],
+    key="file_uploader"
 )
 ```
 
+### 4.3 待优化项 🔴
+
+- [ ] 图表显示位置优化（当前在展开框内）
+- [ ] 添加代码执行进度提示
+- [ ] 优化长输出的截断显示
+
 ---
 
-## 五、使用场景示例
+## 五、使用场景示例 🔴 待测试
+
+> 以下场景需要在阶段 4 进行端到端测试验证
 
 ### 场景 1: 销售数据分析
 
@@ -892,32 +921,44 @@ uploaded_file = st.file_uploader(
 
 ## 八、实施计划
 
-### 阶段 1: 基础集成 (1天)
+### 阶段 1: 基础集成 ✅ 已完成
 
-- [ ] 安装 E2B SDK
-- [ ] 创建 `e2b_tools.py`
-- [ ] 实现 `execute_python_code` 和 `execute_shell_command`
-- [ ] 集成到 Agent Service
-- [ ] 测试基本代码执行
+- [x] 安装 E2B SDK (`e2b>=1.0.0`, `e2b-code-interpreter>=1.0.0`)
+- [x] 创建 `backend/tools/e2b_tools.py`
+- [x] 实现 `execute_python_code` 和 `execute_shell_command`
+- [x] 集成到 Agent Service
+- [x] 测试基本代码执行 ✅ 2025-12-17 验证通过
 
-### 阶段 2: 数据分析能力 (1天)
+### 阶段 2: 数据分析能力 ✅ 已完成
 
-- [ ] 实现 `upload_data_to_sandbox`
-- [ ] 实现 `analyze_csv_data`
-- [ ] 实现 `create_visualization`
-- [ ] 测试数据分析流程
+- [x] 实现 `upload_data_to_sandbox`
+- [x] 实现 `analyze_csv_data`
+- [x] 实现 `create_visualization`
+- [x] 实现 `generate_chart_from_data`
+- [ ] 🔴 **待测试**: 数据分析完整流程（上传CSV → 分析 → 可视化）
 
-### 阶段 3: 前端增强 (0.5天)
+### 阶段 3: 前端增强 ⚠️ 部分完成
 
-- [ ] 添加图表渲染支持
-- [ ] 扩展文件上传类型
-- [ ] 优化执行结果展示
+- [x] 添加图表渲染支持 (`render_content_with_images`)
+- [x] 扩展文件上传类型 (PDF, CSV, Excel, JSON, TXT, Python)
+- [x] 添加 E2B API Key 输入框
+- [ ] 🔴 **待优化**: 图表在工具输出展开框中显示，需要优化布局
+- [ ] 🔴 **待添加**: 代码执行进度条/状态提示
 
-### 阶段 4: 测试与优化 (0.5天)
+### 阶段 4: 测试与优化 🔴 待开始
 
-- [ ] 端到端测试
-- [ ] 性能优化
-- [ ] 文档更新
+- [ ] 🔴 **端到端测试用例**:
+  - [ ] 简单计算: "帮我计算 1+1 并验证" ✅ 已通过
+  - [ ] 数学图表: "画一个正弦波图表"
+  - [ ] 数据分析: 上传 CSV → "分析这个数据"
+  - [ ] 算法验证: "写一个快速排序并测试"
+  - [ ] 复杂可视化: "画一个柱状图展示 [1,2,3,4,5] 的分布"
+- [ ] 🔴 **性能优化**:
+  - [ ] 沙箱复用测试（连续多次代码执行）
+  - [ ] 超时处理测试
+- [ ] 🔴 **文档更新**:
+  - [ ] README 添加 E2B 功能说明
+  - [ ] 添加 E2B_API_KEY 配置说明
 
 ---
 
@@ -938,20 +979,51 @@ uploaded_file = st.file_uploader(
 
 | 维度 | 提升 |
 |------|------|
-| 功能完整度 | 从 90+ 工具扩展到 97+ 工具 |
-| 用户体验 | 支持代码执行、数据分析、图表生成 |
-| 应用场景 | 新增数据科学、算法验证等场景 |
-| 竞争力 | 对标 ChatGPT Code Interpreter |
+| 功能完整度 | 从 90+ 工具扩展到 99+ 工具 ✅ |
+| 用户体验 | 支持代码执行、数据分析、图表生成 ✅ |
+| 应用场景 | 新增数据科学、算法验证等场景 ✅ |
+| 竞争力 | 对标 ChatGPT Code Interpreter ✅ |
 
 ### 开发资源
 
-| 资源 | 预估 |
-|------|------|
-| 开发时间 | 2-3 天 |
-| 测试时间 | 0.5 天 |
-| 代码量 | ~400 行 (新增) |
-| 依赖增加 | 2 个包 (e2b, e2b-code-interpreter) |
+| 资源 | 预估 | 实际 |
+|------|------|------|
+| 开发时间 | 2-3 天 | 1 天 (核心功能) |
+| 测试时间 | 0.5 天 | 🔴 待进行 |
+| 代码量 | ~400 行 | ~500 行 (`e2b_tools.py`) |
+| 依赖增加 | 2 个包 | ✅ 2 个包 |
 
 ---
 
-> **下一步**: 审阅本方案后，确认实施或提出修改意见。
+## 🚨 已解决的技术问题
+
+| 问题 | 原因 | 解决方案 | 日期 |
+|------|------|----------|------|
+| 前端卡在 "Thinking..." | Clash 代理节点选择香港，Gemini API 不可用 | 切换到新加坡节点 | 2025-12-17 |
+| `'str' object has no attribute 'line'` | E2B SDK v1 API 变更 | 修改 `execution.logs.stdout` 处理逻辑 | 2025-12-17 |
+| `asyncio.Lock()` 事件循环问题 | 模块加载时创建 Lock | 改为懒加载 `_get_lock()` | 2025-12-17 |
+
+---
+
+## 📌 下一步行动 (优先级排序)
+
+### 🔴 高优先级
+
+1. **测试数学图表生成**: 发送 "画一个正弦波图表"
+2. **测试数据分析流程**: 上传 CSV 文件 → "分析这个数据"
+3. **测试图表渲染**: 确认 Base64 图片能正确显示
+
+### 🟡 中优先级
+
+4. **优化前端图表显示**: 调整图表在聊天界面的布局
+5. **添加执行状态提示**: 显示 "正在创建沙箱..." 等状态
+
+### 🟢 低优先级
+
+6. **更新 README 文档**: 添加 E2B 功能说明
+7. **部署配置**: 在 Render 添加 E2B_API_KEY 环境变量
+
+---
+
+> **审阅日期**: 2025-12-17
+> **下一次更新**: 完成阶段 4 测试后

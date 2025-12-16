@@ -25,6 +25,19 @@ from tools.search_tools import generate_search_queries, execute_searches_and_get
 from tools.rag_tools import ingest_knowledge, query_knowledge_base
 from tools.structure_tools import format_paper_analysis, format_linkedin_profile
 
+# Import E2B Code Interpreter tools
+from tools.e2b_tools import (
+    execute_python_code,
+    execute_shell_command,
+    install_python_package,
+    upload_data_to_sandbox,
+    download_file_from_sandbox,
+    create_visualization,
+    analyze_csv_data,
+    generate_chart_from_data,
+    close_sandbox
+)
+
 load_dotenv()
 
 # Global variables
@@ -41,13 +54,13 @@ DB_PATH = os.path.join(DATA_DIR, "state.db")
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
 
 SYSTEM_PROMPT = """
-# 🤖 Stream-Agent v6.0 - 全能AI研究助理
+# 🤖 Stream-Agent v8.0 - 全能AI研究助理
 
-你是一个装备了91个强大工具的AI研究助理，能够处理网络搜索、数据抓取、学术研究、社交媒体分析、电商数据提取等多种复杂任务。
+你是一个装备了99个强大工具的AI研究助理，能够处理网络搜索、数据抓取、学术研究、社交媒体分析、电商数据提取、**代码执行与数据分析**等多种复杂任务。
 
 ---
 
-## 📦 工具分类体系 (7大类)
+## 📦 工具分类体系 (8大类)
 
 ### 1️⃣ Web搜索与抓取工具
 **触发场景**: 用户需要搜索信息、抓取网页内容、获取实时数据
@@ -129,6 +142,26 @@ SYSTEM_PROMPT = """
 
 **意图识别关键词**: "生成报告"、"总结"、"分析报告"、"格式化输出"
 
+### 8️⃣ 代码执行与数据分析工具 (E2B云沙箱) 🆕
+**触发场景**: 用户需要执行代码、数据分析、生成图表、验证算法
+**核心工具**:
+- `execute_python_code(code)` - 在安全沙箱中执行Python代码 (支持pandas, numpy, matplotlib等)
+- `execute_shell_command(command)` - 执行Shell命令 (ls, cat, pip list等)
+- `install_python_package(package)` - 安装额外的Python包
+- `upload_data_to_sandbox(filename)` - 上传用户数据文件到沙箱分析
+- `download_file_from_sandbox(path)` - 从沙箱下载文件
+- `create_visualization(desc, type, code)` - 生成可视化图表
+- `analyze_csv_data(filename, request)` - 快速分析CSV数据
+- `generate_chart_from_data(filename, x, y, type, title)` - 快速生成图表
+
+**意图识别关键词**: "执行代码"、"运行"、"计算"、"分析数据"、"画图"、"可视化"、"统计"、"验证"、"CSV"、"Excel"、"数据分析"
+
+**重要提示**:
+- 代码在E2B云沙箱中运行，完全安全隔离
+- 预装库: pandas, numpy, matplotlib, seaborn, plotly, scipy
+- 用户上传的数据文件需先用 `upload_data_to_sandbox` 上传到沙箱
+- 生成图表时会自动返回图片（Base64编码）
+
 ---
 
 ## 🧠 智能意图识别规则
@@ -146,6 +179,10 @@ SYSTEM_PROMPT = """
 | "关于刚才文档的问题" | `query_knowledge_base(query, source_filter)` |
 | "截图这个网页" | `scraping_browser_navigate` → `scraping_browser_screenshot` |
 | "对比这几个商品" | 批量调用 `web_data_*_product` 工具 |
+| "分析这个CSV数据" | `upload_data_to_sandbox` → `analyze_csv_data` |
+| "画一个XX趋势图" | `generate_chart_from_data` 或 `create_visualization` |
+| "计算XX/验证这段代码" | `execute_python_code` |
+| "帮我写个XX算法并运行" | 生成代码 → `execute_python_code` |
 
 ---
 
@@ -172,6 +209,19 @@ SYSTEM_PROMPT = """
 3. `web_data_x_posts` 获取公开言论
 4. 综合分析并生成报告
 
+**示例4: 数据分析任务** 🆕
+1. 用户上传 sales.csv
+2. `upload_data_to_sandbox("sales.csv")` 上传到沙箱
+3. `analyze_csv_data("/home/user/data/sales.csv", "分析销售趋势")` 数据概览
+4. `execute_python_code(detailed_analysis)` 深度分析
+5. `generate_chart_from_data("sales.csv", "month", "revenue", "line", "月度销售趋势")` 生成图表
+
+**示例5: 代码验证任务** 🆕
+1. 用户: "写一个快速排序并验证"
+2. 生成快速排序代码
+3. `execute_python_code(quicksort_with_tests)` 运行并验证
+4. 返回执行结果和测试输出
+
 ---
 
 ## 📋 行动指南 (ReAct思考模式)
@@ -186,6 +236,8 @@ SYSTEM_PROMPT = """
 - 用户发送URL → 判断是否需要学习 `ingest_knowledge` 还是直接抓取 `scrape_as_markdown`
 - 用户问"刚才的文件" → 检查上下文获取文件名，使用 `query_knowledge_base`
 - 对于RAG任务，优先使用 `source_filter` 精确查询，无结果再全局查询
+- **数据文件分析** → 先 `upload_data_to_sandbox`，再用代码分析工具处理
+- **需要执行代码** → 使用 `execute_python_code`，代码在安全沙箱中运行
 """
 
 async def initialize_agent(api_keys: Dict[str, str] = None):
@@ -212,12 +264,21 @@ async def initialize_agent(api_keys: Dict[str, str] = None):
         }
 
     custom_tools = [
-        # generate_search_queries, 
+        # generate_search_queries,
         # execute_searches_and_get_urls,
-        ingest_knowledge, 
+        ingest_knowledge,
         query_knowledge_base,
         format_paper_analysis,
-        format_linkedin_profile
+        format_linkedin_profile,
+        # E2B Code Interpreter tools
+        execute_python_code,
+        execute_shell_command,
+        install_python_package,
+        upload_data_to_sandbox,
+        download_file_from_sandbox,
+        create_visualization,
+        analyze_csv_data,
+        generate_chart_from_data,
     ]
 
     if mcp_servers:
@@ -379,10 +440,12 @@ async def chat_with_agent_stream(message: str, thread_id: str, api_keys: Dict[st
 
 
 async def cleanup():
-    """Cleanup function to close database connection."""
+    """Cleanup function to close database connection and E2B sandbox."""
     global _sqlite_conn, _mcp_client
     if _sqlite_conn:
         await _sqlite_conn.close()
         _sqlite_conn = None
     if _mcp_client:
         _mcp_client = None
+    # 清理 E2B 沙箱
+    await close_sandbox()
