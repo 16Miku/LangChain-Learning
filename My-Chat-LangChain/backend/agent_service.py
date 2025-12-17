@@ -4,6 +4,7 @@ import aiosqlite
 from typing import Dict, Any, List
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage, AIMessage, SystemMessage
 from langgraph.checkpoint.sqlite.aio import AsyncSqliteSaver
 from langgraph.prebuilt import create_react_agent
@@ -32,9 +33,7 @@ from tools.e2b_tools import (
     install_python_package,
     upload_data_to_sandbox,
     download_file_from_sandbox,
-    create_visualization,
     analyze_csv_data,
-    generate_chart_from_data,
     close_sandbox
 )
 
@@ -145,22 +144,26 @@ SYSTEM_PROMPT = """
 ### 8️⃣ 代码执行与数据分析工具 (E2B云沙箱) 🆕
 **触发场景**: 用户需要执行代码、数据分析、生成图表、验证算法
 **核心工具**:
-- `execute_python_code(code)` - 在安全沙箱中执行Python代码 (支持pandas, numpy, matplotlib等)
-- `execute_shell_command(command)` - 执行Shell命令 (ls, cat, pip list等)
+- `execute_python_code(code)` - **万能工具**！执行Python代码，自动捕获matplotlib图表
+- `upload_data_to_sandbox(filename)` - 上传用户数据文件到沙箱
+- `analyze_csv_data(filename, request)` - 快速分析CSV数据概览
+- `execute_shell_command(command)` - 执行Shell命令
 - `install_python_package(package)` - 安装额外的Python包
-- `upload_data_to_sandbox(filename)` - 上传用户数据文件到沙箱分析
 - `download_file_from_sandbox(path)` - 从沙箱下载文件
-- `create_visualization(desc, type, code)` - 生成可视化图表
-- `analyze_csv_data(filename, request)` - 快速分析CSV数据
-- `generate_chart_from_data(filename, x, y, type, title)` - 快速生成图表
 
-**意图识别关键词**: "执行代码"、"运行"、"计算"、"分析数据"、"画图"、"可视化"、"统计"、"验证"、"CSV"、"Excel"、"数据分析"
+**意图识别关键词**: "执行代码"、"运行"、"计算"、"分析数据"、"画图"、"可视化"、"统计"、"验证"、"CSV"、"Excel"
 
-**重要提示**:
-- 代码在E2B云沙箱中运行，完全安全隔离
-- 预装库: pandas, numpy, matplotlib, seaborn, plotly, scipy
-- 用户上传的数据文件需先用 `upload_data_to_sandbox` 上传到沙箱
-- 生成图表时会自动返回图片（Base64编码）
+**重要提示 - 必须遵守**:
+1. **数据分析+图表任务的标准流程(严格按顺序执行)**:
+   - 第一步: `upload_data_to_sandbox(文件名)` 上传文件
+   - 第二步: **先用一段代码读取数据并查看列名**: `df = pd.read_csv(path); print(df.columns.tolist()); print(df.head())`
+   - 第三步: **根据实际列名**编写画图代码，用 `plt.show()` 结尾
+   - **严禁猜测列名**！必须先读取确认
+2. **画图代码必须以 `plt.show()` 结尾**，系统会自动捕获图片
+3. **工具成功后立即停止**，不要重复调用！
+4. **不要在回复中输出Base64数据**，只说"图表已生成"
+5. 预装库: pandas, numpy, matplotlib, seaborn, plotly, scipy
+6. **高效原则**: 尽量在一次代码执行中完成"读取数据+画图"，减少工具调用次数
 
 ---
 
@@ -270,15 +273,15 @@ async def initialize_agent(api_keys: Dict[str, str] = None):
         query_knowledge_base,
         format_paper_analysis,
         format_linkedin_profile,
-        # E2B Code Interpreter tools
-        execute_python_code,
+        # E2B Code Interpreter tools (simplified - only core tools)
+        execute_python_code,  # Main tool for code execution and visualization
         execute_shell_command,
         install_python_package,
         upload_data_to_sandbox,
         download_file_from_sandbox,
-        create_visualization,
         analyze_csv_data,
-        generate_chart_from_data,
+        # Removed: generate_chart_from_data, create_visualization
+        # Reason: execute_python_code handles all these cases better
     ]
 
     if mcp_servers:
@@ -303,15 +306,38 @@ async def initialize_agent(api_keys: Dict[str, str] = None):
 
     print(f"✅ [Agent Service] Loaded {all_tools} ")
 
-    # 2. Configure LLM
-    if "GOOGLE_API_KEY" not in os.environ:
-        raise ValueError("GOOGLE_API_KEY is missing!")
-        
-    llm = ChatGoogleGenerativeAI(
-        model="gemini-2.5-flash",
-        google_api_key=os.environ["GOOGLE_API_KEY"],
-        temperature=0
-    )
+    # 2. Configure LLM (支持两种模式)
+    llm_provider = api_keys.get("LLM_PROVIDER", "google") if api_keys else os.environ.get("LLM_PROVIDER", "google")
+
+    if llm_provider == "openai_compatible":
+        # 使用 OpenAI 兼容的第三方中转平台
+        openai_base_url = api_keys.get("OPENAI_BASE_URL") if api_keys else os.environ.get("OPENAI_BASE_URL")
+        openai_api_key = api_keys.get("OPENAI_API_KEY") if api_keys else os.environ.get("OPENAI_API_KEY")
+        openai_model = api_keys.get("OPENAI_MODEL", "gpt-4o-mini") if api_keys else os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+
+        if not openai_base_url or not openai_api_key:
+            raise ValueError("OpenAI Compatible mode requires OPENAI_BASE_URL and OPENAI_API_KEY!")
+
+        llm = ChatOpenAI(
+            model=openai_model,
+            base_url=openai_base_url,
+            api_key=openai_api_key,
+            temperature=0
+        )
+        print(f"✅ [Agent Service] Using OpenAI Compatible LLM: {openai_model} @ {openai_base_url}")
+    else:
+        # 默认使用 Google Gemini 官方 API
+        if "GOOGLE_API_KEY" not in os.environ:
+            raise ValueError("GOOGLE_API_KEY is missing!")
+
+        google_model = api_keys.get("GOOGLE_MODEL", "gemini-2.0-flash-lite") if api_keys else os.environ.get("GOOGLE_MODEL", "gemini-2.0-flash-lite")
+
+        llm = ChatGoogleGenerativeAI(
+            model=google_model,
+            google_api_key=os.environ["GOOGLE_API_KEY"],
+            temperature=0
+        )
+        print(f"✅ [Agent Service] Using Google Gemini LLM: {google_model}")
 
     # 3. Create LangGraph Agent with AsyncSqliteSaver
     if _sqlite_conn is None:
@@ -429,8 +455,31 @@ async def chat_with_agent_stream(message: str, thread_id: str, api_keys: Dict[st
         elif kind == "on_tool_end":
             tool_name = event["name"]
             output = str(event["data"].get("output", ""))
-            # Truncate long outputs for display
-            safe_output = (output[:1000] + '...') if len(output) > 1000 else output
+
+            # Check if output contains image data - don't truncate images!
+            if "[IMAGE_BASE64:" in output:
+                # Extract and preserve image data, truncate only non-image text
+                import re
+                image_pattern = r'\[IMAGE_BASE64:[A-Za-z0-9+/=]+\]'
+                images = re.findall(image_pattern, output)
+                text_parts = re.split(image_pattern, output)
+
+                # Truncate text parts but keep full images
+                truncated_text_parts = [
+                    (part[:500] + '...' if len(part) > 500 else part)
+                    for part in text_parts
+                ]
+
+                # Reconstruct output with full images
+                safe_output = ""
+                for i, text_part in enumerate(truncated_text_parts):
+                    safe_output += text_part
+                    if i < len(images):
+                        safe_output += images[i]
+            else:
+                # No images - apply normal truncation
+                safe_output = (output[:1000] + '...') if len(output) > 1000 else output
+
             tool_data = json.dumps({"name": tool_name, "output": safe_output}, ensure_ascii=False)
             encoded_data = encode_sse_data(tool_data)
             yield f"event: tool_end\ndata: {encoded_data}\n\n"

@@ -30,39 +30,56 @@ def _get_lock() -> asyncio.Lock:
     return _sandbox_lock
 
 
-async def get_sandbox() -> AsyncSandbox:
-    """
-    获取或创建 E2B Sandbox 单例。
-    使用单例模式避免频繁创建/销毁沙箱，节省成本和时间。
-    """
-    global _sandbox
+async def _create_new_sandbox() -> AsyncSandbox:
+    """Create a new E2B sandbox instance."""
+    api_key = os.environ.get("E2B_API_KEY")
+    if not api_key:
+        raise ValueError("E2B_API_KEY 环境变量未设置。请在 .env 文件中配置 E2B_API_KEY。")
 
-    async with _get_lock():
-        if _sandbox is None:
-            api_key = os.environ.get("E2B_API_KEY")
-            if not api_key:
-                raise ValueError("E2B_API_KEY 环境变量未设置。请在 .env 文件中配置 E2B_API_KEY。")
+    print("📦 [E2B] 正在创建云沙箱...")
+    sandbox = await AsyncSandbox.create(
+        api_key=api_key,
+        timeout=600,  # 10分钟超时 (increased from 5 min)
+    )
 
-            print("📦 [E2B] 正在创建云沙箱...")
-            _sandbox = await AsyncSandbox.create(
-                api_key=api_key,
-                timeout=300,  # 5分钟超时
-            )
-
-            # 预装常用数据分析库
-            print("📦 [E2B] 正在安装常用数据分析库...")
-            await _sandbox.run_code(
-                """
+    # 预装常用数据分析库
+    print("📦 [E2B] 正在安装常用数据分析库...")
+    await sandbox.run_code(
+        """
 import subprocess
 subprocess.run(['pip', 'install', '-q', 'pandas', 'numpy', 'matplotlib', 'seaborn', 'plotly', 'openpyxl', 'xlrd', 'scipy'],
                capture_output=True)
 print("✅ 常用库安装完成")
 """,
-                timeout=120
-            )
-            print("✅ [E2B] 沙箱环境初始化完成")
+        timeout=120
+    )
+    print("✅ [E2B] 沙箱环境初始化完成")
+    return sandbox
 
-        return _sandbox
+
+async def get_sandbox() -> AsyncSandbox:
+    """
+    获取或创建 E2B Sandbox 单例。
+    使用单例模式避免频繁创建/销毁沙箱，节省成本和时间。
+    如果沙箱超时失效，会自动重新创建。
+    """
+    global _sandbox
+
+    async with _get_lock():
+        # 如果沙箱不存在，创建新的
+        if _sandbox is None:
+            _sandbox = await _create_new_sandbox()
+            return _sandbox
+
+        # 检查沙箱是否仍然有效（通过尝试执行简单命令）
+        try:
+            await _sandbox.run_code("print('ping')", timeout=5)
+            return _sandbox
+        except Exception as e:
+            print(f"⚠️ [E2B] 沙箱已失效 ({str(e)[:50]}...)，正在重新创建...")
+            _sandbox = None
+            _sandbox = await _create_new_sandbox()
+            return _sandbox
 
 
 async def close_sandbox():
@@ -148,7 +165,9 @@ async def execute_python_code(code: str) -> str:
                     output_parts.append(f"📊 **结果**:\n```\n{result.text}\n```")
                 # 处理图片结果
                 if hasattr(result, 'png') and result.png:
-                    output_parts.append(f"🖼️ **图表已生成** [IMAGE_BASE64:{result.png}]")
+                    # Note: The [IMAGE_BASE64:...] marker will be rendered as an image by the frontend
+                    # Do NOT repeat this data in your response - just tell the user the chart was generated
+                    output_parts.append(f"🖼️ **图表已生成并显示在上方**\n[IMAGE_BASE64:{result.png}]")
 
         # 处理执行错误
         if execution.error:
@@ -290,17 +309,27 @@ async def upload_data_to_sandbox(filename: str) -> str:
     - 文件将被上传到沙箱的 /home/user/data/ 目录
     - 上传后可使用 execute_python_code 读取和分析文件
     """
+    import platform
+
     try:
-        # 读取本地临时文件
-        temp_dir = "/tmp/temp_uploads"
+        # Determine temp upload directory based on platform
+        if platform.system() == "Windows":
+            temp_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "temp_uploads")
+        else:
+            temp_dir = "/tmp/temp_uploads"
+
         local_path = os.path.join(temp_dir, filename)
 
         if not os.path.exists(local_path):
-            # 尝试 Windows 路径
-            temp_dir_win = os.path.join(os.path.dirname(os.path.dirname(__file__)), "temp_uploads")
-            local_path = os.path.join(temp_dir_win, filename)
-            if not os.path.exists(local_path):
-                return f"❌ 找不到文件: {filename}。请确认文件已上传。"
+            # List available files to help user
+            available_files = []
+            if os.path.exists(temp_dir):
+                available_files = [f for f in os.listdir(temp_dir) if os.path.isfile(os.path.join(temp_dir, f))]
+
+            if available_files:
+                return f"❌ 找不到文件: {filename}。\n可用文件: {', '.join(available_files[:5])}"
+            else:
+                return f"❌ 找不到文件: {filename}。临时上传目录为空，请先上传文件。"
 
         sandbox = await get_sandbox()
         sandbox_path = f"/home/user/data/{filename}"
@@ -435,7 +464,8 @@ plt.show()
         if execution.results:
             for result in execution.results:
                 if hasattr(result, 'png') and result.png:
-                    output_parts.append(f"✅ **图表生成成功**")
+                    output_parts.append(f"✅ **图表生成成功** (图片已显示在前端)")
+                    # Note: Frontend will render this as an image - do not repeat in LLM response
                     output_parts.append(f"[IMAGE_BASE64:{result.png}]")
                     image_found = True
                     break

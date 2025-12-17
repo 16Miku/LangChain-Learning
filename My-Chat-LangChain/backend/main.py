@@ -41,7 +41,12 @@ app.add_middleware(
 )
 
 # --- Configuration ---
-TEMP_UPLOAD_DIR = "/tmp/temp_uploads"
+# Use relative path for Windows compatibility, absolute for Linux/deployment
+import platform
+if platform.system() == "Windows":
+    TEMP_UPLOAD_DIR = os.path.join(os.path.dirname(__file__), "temp_uploads")
+else:
+    TEMP_UPLOAD_DIR = "/tmp/temp_uploads"
 os.makedirs(TEMP_UPLOAD_DIR, exist_ok=True)
 
 # --- Data Models ---

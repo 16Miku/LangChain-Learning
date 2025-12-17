@@ -54,7 +54,7 @@ def reset_chat():
 
 # --- 4. Sidebar & Configuration ---
 with st.sidebar:
-    st.title("🤖 Stream-Agent v7.0")
+    st.title("🤖 Stream-Agent v8.0")
 
     if st.button("🔄 New Chat", type="primary"):
         reset_chat()
@@ -62,14 +62,64 @@ with st.sidebar:
 
     st.markdown("---")
 
+    # LLM Provider Selection
+    with st.expander("🧠 LLM Configuration", expanded=True):
+        llm_provider = st.radio(
+            "Select LLM Provider",
+            options=["google", "openai_compatible"],
+            format_func=lambda x: "Google Gemini (Official)" if x == "google" else "OpenAI Compatible (Proxy)",
+            index=0,
+            help="Choose between Google's official API or a third-party OpenAI-compatible proxy"
+        )
+
+        if llm_provider == "google":
+            st.caption("Using Google Gemini API directly")
+            google_model = st.text_input(
+                "Model Name",
+                value="gemini-2.0-flash-lite",
+                help="e.g., gemini-2.0-flash-lite, gemini-1.5-flash, gemini-2.5-flash"
+            )
+            # Store LLM config
+            st.session_state.llm_config = {
+                "LLM_PROVIDER": "google",
+                "GOOGLE_MODEL": google_model
+            }
+        else:
+            st.caption("Using OpenAI-compatible API endpoint")
+            openai_base_url = st.text_input(
+                "Base URL",
+                value="https://api.openai.com/v1",
+                help="e.g., https://api.openrouter.ai/api/v1"
+            )
+            openai_api_key = st.text_input(
+                "API Key",
+                type="password",
+                help="Your proxy platform's API key"
+            )
+            openai_model = st.text_input(
+                "Model Name",
+                value="gpt-4o-mini",
+                help="e.g., gpt-4o-mini, google/gemini-2.0-flash"
+            )
+            # Store LLM config
+            st.session_state.llm_config = {
+                "LLM_PROVIDER": "openai_compatible",
+                "OPENAI_BASE_URL": openai_base_url,
+                "OPENAI_API_KEY": openai_api_key,
+                "OPENAI_MODEL": openai_model
+            }
+
+    st.markdown("---")
+
     # API Key Config
-    with st.expander("⚙️ API Keys", expanded=True):
+    with st.expander("⚙️ Tool API Keys", expanded=False):
         serper_key = st.text_input("Serper API Key", type="password", value=os.environ.get("SERPER_API_KEY", ""))
         brightdata_key = st.text_input("BrightData API Key", type="password", value=os.environ.get("BRIGHT_DATA_API_KEY", ""))
         papersearch_key = st.text_input("Paper Search API Key", type="password", value=os.environ.get("PAPER_SEARCH_API_KEY", ""))
         e2b_key = st.text_input("E2B API Key", type="password", value=os.environ.get("E2B_API_KEY", ""), help="For code execution sandbox")
 
-        st.session_state.api_keys = {
+        # Store tool API keys (will be merged with LLM config when sending)
+        st.session_state.tool_api_keys = {
             "SERPER_API_KEY": serper_key,
             "BRIGHT_DATA_API_KEY": brightdata_key,
             "PAPER_SEARCH_API_KEY": papersearch_key,
@@ -140,7 +190,11 @@ def render_content_with_images(content):
         try:
             image_b64 = match.group(1)
             image_bytes = base64.b64decode(image_b64)
-            st.image(image_bytes, caption="📊 Generated Chart", use_container_width=True)
+            # Use try/except for Streamlit version compatibility
+            try:
+                st.image(image_bytes, caption="📊 Generated Chart", use_container_width=True)
+            except TypeError:
+                st.image(image_bytes, caption="📊 Generated Chart", use_column_width=True)
         except Exception as e:
             st.warning(f"Failed to render image: {e}")
 
@@ -200,24 +254,41 @@ def stream_generator(prompt):
         matches = list(re.finditer(image_pattern, output_str))
 
         if matches:
-            # Has images - render them
+            # Has images - render them directly in container
             for match in matches:
                 try:
                     image_b64 = match.group(1)
                     image_bytes = base64.b64decode(image_b64)
-                    container.image(image_bytes, caption="📊 Generated Chart", use_container_width=True)
+                    # Use try/except for Streamlit version compatibility
+                    try:
+                        container.image(image_bytes, caption="📊 Generated Chart", use_container_width=True)
+                    except TypeError:
+                        # Fallback for older Streamlit versions
+                        container.image(image_bytes, caption="📊 Generated Chart", use_column_width=True)
                 except Exception as e:
                     container.warning(f"Failed to render chart: {e}")
 
-            # Show text output (without image markers)
-            clean_output = re.sub(image_pattern, '[Chart rendered above]', output_str)
-            if clean_output.strip():
-                container.code(clean_output[:2000])
+            # Show text output (without image markers) - clean up markdown formatting
+            clean_output = re.sub(image_pattern, '', output_str).strip()
+            # Remove raw markdown and extra formatting for cleaner display
+            clean_output = clean_output.replace('**结果**:', '').replace('**图表已生成并显示在上方**', '')
+            clean_output = re.sub(r'```\n?', '', clean_output).strip()
+            clean_output = re.sub(r'📊|🖼️', '', clean_output).strip()
+            if clean_output and len(clean_output) > 10:
+                container.caption(clean_output[:500])
         else:
-            # No images, just show code
-            container.code(output_str[:2000])
+            # No images, just show text (truncated)
+            if output_str:
+                container.text(output_str[:1500])
 
-    active_keys = {k: v for k, v in st.session_state.api_keys.items() if v}
+    # Merge LLM config and tool API keys
+    llm_config = st.session_state.get("llm_config", {"LLM_PROVIDER": "google"})
+    tool_keys = st.session_state.get("tool_api_keys", {})
+
+    # Combine all configs, filtering out empty values
+    all_api_keys = {**llm_config, **tool_keys}
+    active_keys = {k: v for k, v in all_api_keys.items() if v}
+
     payload = {
         "message": prompt,
         "thread_id": st.session_state.thread_id,
@@ -260,7 +331,19 @@ def stream_generator(prompt):
                     if event_type == "text":
                         # Text content - decode base64 and yield for streaming display
                         text_content = decode_sse_data(raw_data)
-                        yield text_content
+
+                        # Filter out Base64 image data from text stream
+                        # Images should only be rendered in tool_end results
+                        if "[IMAGE_BASE64:" in text_content or "data:image" in text_content.lower():
+                            # Check if this looks like base64 data (long alphanumeric string)
+                            if len(text_content) > 100 and re.match(r'^[A-Za-z0-9+/=\s]+$', text_content.replace('\n', '')):
+                                continue  # Skip pure base64 chunks
+                            # Filter out image markers from mixed content
+                            text_content = re.sub(r'\[IMAGE_BASE64:[A-Za-z0-9+/=]+\]', '[图表已在上方工具结果中显示]', text_content)
+                            text_content = re.sub(r'!\[.*?\]\(data:image/[^)]+\)', '[图表已生成]', text_content)
+
+                        if text_content.strip():
+                            yield text_content
 
                     elif event_type == "tool_start":
                         # Tool start event - decode and display
@@ -277,15 +360,17 @@ def stream_generator(prompt):
 
                             status_container.markdown(f"✅ **{tool_name}** finished.")
 
-                            # Special handling for visualization tools
+                            # Render output directly in status_container (no nested expanders)
                             if tool_name in ['create_visualization', 'generate_chart_from_data', 'execute_python_code']:
-                                with status_container.expander(f"Result ({tool_name})", expanded=True):
-                                    render_tool_output(tool_output, st)
-                            else:
-                                with status_container.expander(f"Result ({tool_name})"):
-                                    st.code(tool_output[:2000])
-                        except Exception:
-                            status_container.write("Tool finished.")
+                                # Check if output contains image
+                                if "[IMAGE_BASE64:" in tool_output:
+                                    render_tool_output(tool_output, status_container)
+                                elif tool_output:
+                                    status_container.text(tool_output[:1500])
+                            elif tool_output:
+                                status_container.text(tool_output[:1000])
+                        except Exception as e:
+                            status_container.write(f"Tool finished. (Error: {str(e)[:80]})")
 
                     elif event_type == "done":
                         # Stream finished signal, don't yield anything
