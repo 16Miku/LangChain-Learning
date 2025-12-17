@@ -6,6 +6,13 @@ import time
 import uuid
 import base64
 import re
+from dotenv import load_dotenv
+
+# --- 0. Load Environment Variables ---
+# 尝试加载 backend/.env 文件（本地开发时）
+env_path = os.path.join(os.path.dirname(__file__), "..", "backend", ".env")
+if os.path.exists(env_path):
+    load_dotenv(env_path)
 
 # --- 1. API Config ---
 # Read from Environment Variable for Cloud Deployment
