@@ -9,20 +9,20 @@ typora-copy-images-to: media
 
 ## My-Chat-LangChain 应用说明书 v1.0
 
-[My-Chat-LangChain\Note-V1.md](Note-V1.md)
+[My-Chat-LangChain\Note\Note-V1.md](Note/Note-V1.md)
 
 
 
 ## My-Chat-LangChain 应用说明书 v2.0 (企业版)
 
-[My-Chat-LangChain\Note-V2.md](Note-V2.md)
+[My-Chat-LangChain\Note\Note-V2.md](Note/Note-V2.md)
 
 
 ## My-Chat-LangChain 应用说明书 v3.0 (企业版)
 
 
 
-[My-Chat-LangChain\Note-V3.md](Note-V3.md)
+[My-Chat-LangChain\Note\Note-V3.md](Note/Note-V3.md)
 
 
 
@@ -31,7 +31,7 @@ typora-copy-images-to: media
 
 
 
-[My-Chat-LangChain\Note-V4.md](Note-V4.md)
+[My-Chat-LangChain\Note\Note-V4.md](Note/Note-V4.md)
 
 
 [CSDN文章：从0到1，构建你的专属AI知识库：My-Chat-LangChain项目深度解析](https://blog.csdn.net/m0_73479109/article/details/152751205?spm=1001.2014.3001.5501)
@@ -47,7 +47,7 @@ typora-copy-images-to: media
 
 
 
-[My-Chat-LangChain\Note-V5.md](Note-V5.md)
+[My-Chat-LangChain\Note\Note-V5.md](Note/Note-V5.md)
 
 
 
@@ -57,9 +57,9 @@ typora-copy-images-to: media
 
 ## My-Chat-LangChain 应用说明书 v6.0 (引入Agent)
 
+[My-Chat-LangChain\Note\Plan-V6.md](Note/Plan-V6.md)
 
-
-[My-Chat-LangChain\Note-V6.md](Note-V6.md)
+[My-Chat-LangChain\Note\Note-V6.md](Note/Note-V6.md)
 
 
 
@@ -69,7 +69,7 @@ typora-copy-images-to: media
 
 *   https://my-chat-langchain.onrender.com/
 
-[My-Chat-LangChain\Deployment-Guide.md](Deployment-Guide.md)
+[My-Chat-LangChain\Note\Deployment-Guide.md](Note/Deployment-Guide.md)
 
 
 
@@ -95,7 +95,23 @@ typora-copy-images-to: media
 
 ## My-Chat-LangChain 应用说明书 v7.0 (引入Agent)
 
-[My-Chat-LangChain\Note-V7.md](Note-V7.md)
+[My-Chat-LangChain\Note\Note-V7.md](Note/Note-V7.md)
+
+
+## Plan-V8: E2B 代码执行沙箱集成方案
+
+[My-Chat-LangChain\Note\Plan-V8.md](Note/Plan-V8.md)
+
+
+
+## # Stream-Agent V8.0 开发说明文档- 集成了 E2B 云沙箱
+
+
+[My-Chat-LangChain\Note\Note-V8.md](Note/Note-V8.md)
+
+
+
+
 
 
 
