@@ -64,11 +64,21 @@ with st.sidebar:
 
     # LLM Provider Selection
     with st.expander("🧠 LLM Configuration", expanded=True):
+        # 从环境变量读取默认值
+        default_provider = os.environ.get("LLM_PROVIDER", "google")
+        default_google_model = os.environ.get("GOOGLE_MODEL", "gemini-2.0-flash-lite")
+        default_openai_base_url = os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        default_openai_api_key = os.environ.get("OPENAI_API_KEY", "")
+        default_openai_model = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+
+        # 根据环境变量设置默认选中的 provider
+        provider_index = 1 if default_provider == "openai_compatible" else 0
+
         llm_provider = st.radio(
             "Select LLM Provider",
             options=["google", "openai_compatible"],
             format_func=lambda x: "Google Gemini (Official)" if x == "google" else "OpenAI Compatible (Proxy)",
-            index=0,
+            index=provider_index,
             help="Choose between Google's official API or a third-party OpenAI-compatible proxy"
         )
 
@@ -76,7 +86,7 @@ with st.sidebar:
             st.caption("Using Google Gemini API directly")
             google_model = st.text_input(
                 "Model Name",
-                value="gemini-2.0-flash-lite",
+                value=default_google_model,
                 help="e.g., gemini-2.0-flash-lite, gemini-1.5-flash, gemini-2.5-flash"
             )
             # Store LLM config
@@ -86,19 +96,24 @@ with st.sidebar:
             }
         else:
             st.caption("Using OpenAI-compatible API endpoint")
+            # 显示是否已从环境变量加载
+            if default_openai_api_key:
+                st.success("✓ API Key loaded from .env")
+
             openai_base_url = st.text_input(
                 "Base URL",
-                value="https://api.openai.com/v1",
+                value=default_openai_base_url,
                 help="e.g., https://api.openrouter.ai/api/v1"
             )
             openai_api_key = st.text_input(
                 "API Key",
                 type="password",
-                help="Your proxy platform's API key"
+                value=default_openai_api_key,
+                help="Your proxy platform's API key (auto-loaded from .env if set)"
             )
             openai_model = st.text_input(
                 "Model Name",
-                value="gpt-4o-mini",
+                value=default_openai_model,
                 help="e.g., gpt-4o-mini, google/gemini-2.0-flash"
             )
             # Store LLM config
