@@ -1210,52 +1210,146 @@ cd ../frontend
 streamlit run app.py --server.port 8501
 ```
 
-### 11.2 Render 部署
+### 11.2 Render 部署 (推荐)
 
-#### 后端服务配置
+本项目使用 **Docker + Blueprint** 方式部署到 Render，前后端运行在同一容器中。
 
+#### 核心配置文件
+
+**render.yaml** (位于项目根目录):
 ```yaml
-# render.yaml
+# ============================================================
+# Render Blueprint 配置文件 - Stream-Agent V8.0
+# ============================================================
+
 services:
   - type: web
-    name: stream-agent-backend
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    name: my-chat-langchain
+    runtime: docker
+    plan: free
+    rootDir: My-Chat-LangChain
+
+    # 健康检查配置
+    healthCheckPath: /health
+
+    # 环境变量配置
     envVars:
+      # LLM 配置 (Google Gemini)
       - key: GOOGLE_API_KEY
-        sync: false
+        sync: false  # 在 Render Dashboard 手动填入
+      - key: GOOGLE_MODEL
+        value: gemini-2.0-flash-lite
+
+      # E2B 代码执行 (V8.0 必须)
       - key: E2B_API_KEY
         sync: false
+
+      # MCP 工具 (可选)
       - key: BRIGHT_DATA_API_KEY
         sync: false
+      - key: PAPER_SEARCH_API_KEY
+        sync: false
+
+      # 系统配置
+      - key: DATA_DIR
+        value: /var/lib/data
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PYTHONPATH
+        value: /app/backend
 ```
 
-#### 前端服务配置
+**Dockerfile**:
+```dockerfile
+FROM python:3.11-slim
+WORKDIR /app
 
-```yaml
-  - type: web
-    name: stream-agent-frontend
-    env: python
-    buildCommand: pip install streamlit requests
-    startCommand: streamlit run app.py --server.port $PORT --server.address 0.0.0.0
-    envVars:
-      - key: BACKEND_URL
-        value: https://stream-agent-backend.onrender.com
+# 安装系统依赖
+RUN apt-get update && apt-get install -y \
+    build-essential curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# 安装 Python 依赖
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# 复制代码
+COPY . .
+
+# 环境变量
+ENV PYTHONPATH=/app/backend
+ENV DATA_DIR=/var/lib/data
+
+# 启动脚本
+RUN chmod +x start.sh
+EXPOSE 8501
+CMD ["./start.sh"]
 ```
+
+**start.sh**:
+```bash
+#!/bin/bash
+set -e
+
+# 启动后端
+uvicorn backend.main:app --host 0.0.0.0 --port 8000 &
+sleep 5
+
+# 启动前端
+export BACKEND_URL="http://127.0.0.1:8000"
+PORT=${PORT:-8501}
+streamlit run frontend/app.py \
+    --server.port=$PORT \
+    --server.address=0.0.0.0 \
+    --server.enableCORS=false
+```
+
+#### 部署步骤
+
+1. **准备 API Keys**:
+   - `GOOGLE_API_KEY`: https://aistudio.google.com/apikey
+   - `E2B_API_KEY`: https://e2b.dev/dashboard
+
+2. **创建 Blueprint**:
+   - Render Dashboard → New + → Blueprint
+   - 连接 GitHub 仓库
+   - 自动读取 `render.yaml`
+
+3. **配置环境变量**:
+   - Environment → 添加 `GOOGLE_API_KEY`
+   - Environment → 添加 `E2B_API_KEY`
+
+4. **部署验证**:
+   - 查看 Logs 确认启动成功
+   - 访问 URL 测试功能
+   - 发送 "画一个正弦波" 验证 E2B
+
+#### 部署核对清单
+
+- [ ] `requirements.txt` 包含 E2B 依赖
+- [ ] `render.yaml` 配置正确
+- [ ] `GOOGLE_API_KEY` 已设置
+- [ ] `E2B_API_KEY` 已设置
+- [ ] 日志显示 "Application startup complete"
+- [ ] 图表功能正常
+
+详细部署指南请参考: [Deployment-Guide.md](Deployment-Guide.md)
 
 ### 11.3 环境变量清单
 
 | 变量名 | 必须 | 说明 |
 |--------|------|------|
 | `GOOGLE_API_KEY` | 是* | Google AI API Key |
+| `GOOGLE_MODEL` | 否 | 模型名称，默认 gemini-2.0-flash-lite |
 | `E2B_API_KEY` | 是 | E2B 沙箱 API Key |
 | `BRIGHT_DATA_API_KEY` | 否 | BrightData MCP Key |
 | `PAPER_SEARCH_API_KEY` | 否 | Paper Search MCP Key |
-| `LLM_PROVIDER` | 否 | 默认 "google" |
+| `LLM_PROVIDER` | 否 | 默认 "google"，可选 "openai_compatible" |
 | `OPENAI_BASE_URL` | 否 | OpenAI 兼容模式 URL |
 | `OPENAI_API_KEY` | 否 | OpenAI 兼容模式 Key |
 | `OPENAI_MODEL` | 否 | OpenAI 兼容模式模型 |
+| `DATA_DIR` | 否 | 数据目录，默认 /var/lib/data |
+| `PYTHONPATH` | 否 | Python 路径，默认 /app/backend |
 
 *如果使用 OpenAI 兼容模式，可以不设置
 

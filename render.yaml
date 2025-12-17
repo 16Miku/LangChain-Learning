@@ -1,17 +1,66 @@
+# ============================================================
+# Render Blueprint 配置文件 - Stream-Agent V8.0
+# ============================================================
+# 文档: https://render.com/docs/blueprint-spec
+# 更新日期: 2025-12-17
+# ============================================================
+
 services:
   - type: web
     name: my-chat-langchain
     runtime: docker
     plan: free
     rootDir: My-Chat-LangChain
+
+    # 健康检查配置
+    healthCheckPath: /health
+
+    # 环境变量配置
     envVars:
+      # ============================================================
+      # LLM 配置 (二选一)
+      # ============================================================
+
+      # 方式1: Google Gemini (默认)
       - key: GOOGLE_API_KEY
+        sync: false  # 在 Render Dashboard 手动填入
+      - key: GOOGLE_MODEL
+        value: gemini-2.0-flash-lite
+
+      # 方式2: OpenAI 兼容模式 (可选，如使用第三方中转)
+      - key: LLM_PROVIDER
+        value: openai_compatible
+      - key: OPENAI_BASE_URL
         sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+
+      # ============================================================
+      # E2B 代码执行沙箱 (V8.0 新增，必须)
+      # ============================================================
+      - key: E2B_API_KEY
+        sync: false  # 在 Render Dashboard 手动填入
+
+      # ============================================================
+      # MCP 工具 API Keys (可选)
+      # ============================================================
       - key: BRIGHT_DATA_API_KEY
         sync: false
       - key: PAPER_SEARCH_API_KEY
         sync: false
+
+      # ============================================================
+      # 其他配置 (保留兼容)
+      # ============================================================
       - key: OPENAI_API_KEY
-        sync: false
+        sync: false  # 保留兼容旧版本
       - key: DATA_DIR
         value: /var/lib/data
+
+      # Python 环境配置
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PYTHONPATH
+        value: /app/backend

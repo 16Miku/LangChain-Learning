@@ -1,3 +1,9 @@
+# ============================================================
+# Stream-Agent V8.0 Dependencies
+# 更新日期: 2025-12-17
+# ============================================================
+
+# Web Framework
 fastapi==0.116.1
 uvicorn==0.35.0
 python-multipart==0.0.20
@@ -11,6 +17,7 @@ langchain==0.3.27
 langchain-community==0.3.29
 langchain-core==0.3.76
 langchain-google-genai==2.1.9
+langchain-openai>=0.3.0
 langchain-huggingface==0.3.1
 langchain-chroma==0.2.5
 langgraph==0.6.6
@@ -27,11 +34,14 @@ sentence-transformers==5.1.1
 # Database
 aiosqlite==0.21.0
 
-
-# MCP
+# MCP (Model Context Protocol)
 langchain-mcp-adapters==0.1.11
 mcp==1.13.1
 fastapi-mcp==0.4.0
 
-# Frontend (for Streamlit Cloud)
+# E2B Code Interpreter (V8.0 新增)
+e2b>=1.0.0
+e2b-code-interpreter>=1.0.0
+
+# Frontend (for Streamlit Cloud / Render)
 streamlit==1.46.1
