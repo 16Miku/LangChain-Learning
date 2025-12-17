@@ -847,6 +847,10 @@ print(f"1 到 100 的和是: {total}")
 ✅ 代码执行成功
 ```
 
+![帮我计算 1 到 100 的和](../media/Snipaste_2025-12-18_01-44-57.png)
+
+
+
 ### 7.2 数学图表生成
 
 **用户输入**:
@@ -876,13 +880,18 @@ plt.show()
 
 **输出**: 显示对比图表
 
+
+![画一个正弦波和余弦波的对比图](../media/Snipaste_2025-12-18_01-46-09.png)
+
+
+
 ### 7.3 CSV 数据分析
 
 **步骤 1**: 上传 CSV 文件 (通过侧边栏)
 
 **步骤 2**: 发送消息
 ```
-分析上传的 sales.csv 文件，找出销售最好的月份，并画一个趋势图
+分析上传的 test_sales.csv 文件，找出销售最好的月份，并画一个趋势图
 ```
 
 **Agent 执行流程**:
@@ -896,6 +905,13 @@ plt.show()
 3. execute_python_code(分析并画图)
    → 输出分析结果 + 趋势图
 ```
+
+![CSV 数据分析1](../media/Snipaste_2025-12-18_01-50-48.png)
+
+![CSV 数据分析2](../media/Snipaste_2025-12-18_01-50-53.png)
+
+
+
 
 ### 7.4 算法验证
 
@@ -934,6 +950,13 @@ for i, arr in enumerate(test_cases):
 """)
 ```
 
+
+
+![alt text](../media/Snipaste_2025-12-18_01-55-52.png)
+
+
+
+
 ### 7.5 安装额外包
 
 **用户输入**:
@@ -953,6 +976,33 @@ for i, arr in enumerate(test_cases):
    print(f"响应: {response.json()}")
    """)
 ```
+
+
+![alt text](../media/Snipaste_2025-12-18_01-58-06.png)
+
+![alt text](../media/Snipaste_2025-12-18_01-58-08.png)
+
+
+
+
+
+
+### 7.6 搜索和爬虫功能
+
+![alt text](../media/Snipaste_2025-12-18_02-01-54.png)
+
+![alt text](../media/Snipaste_2025-12-18_02-02-06.png)
+
+![alt text](../media/Snipaste_2025-12-18_02-02-12.png)
+
+![alt text](../media/Snipaste_2025-12-18_02-02-27.png)
+
+
+
+
+
+
+
 
 ---
 
