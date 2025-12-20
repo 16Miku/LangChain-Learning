@@ -122,38 +122,38 @@ pip install fastapi "uvicorn[standard]" langchain langchain-community langchain-
 
 ##### 后端FastAPI接口测试
 
-![alt text](media/Snipaste_2025-10-05_04-31-21.png)
+![alt text](../media/Snipaste_2025-10-05_04-31-21.png)
 
-![alt text](media/Snipaste_2025-10-05_04-33-17.png)
+![alt text](../media/Snipaste_2025-10-05_04-33-17.png)
 
 
 ##### 网页知识库效果
 
 
-![alt text](media/Snipaste_2025-10-05_05-14-32.png)
+![alt text](../media/Snipaste_2025-10-05_05-14-32.png)
 
-![alt text](media/Snipaste_2025-10-05_05-16-05.png)
+![alt text](../media/Snipaste_2025-10-05_05-16-05.png)
 
-![alt text](media/Snipaste_2025-10-05_05-16-11.png)
+![alt text](../media/Snipaste_2025-10-05_05-16-11.png)
 
-![alt text](media/Snipaste_2025-10-05_05-16-12.png)
+![alt text](../media/Snipaste_2025-10-05_05-16-12.png)
 
-![alt text](media/Snipaste_2025-10-05_05-16-13.png)
+![alt text](../media/Snipaste_2025-10-05_05-16-13.png)
 
 
 
 ##### 文档知识库效果
 
 
-![alt text](media/Snipaste_2025-10-05_05-17-29.png)
+![alt text](../media/Snipaste_2025-10-05_05-17-29.png)
 
-![alt text](media/Snipaste_2025-10-05_05-19-17.png)
+![alt text](../media/Snipaste_2025-10-05_05-19-17.png)
 
-![alt text](media/Snipaste_2025-10-05_05-19-26.png)
+![alt text](../media/Snipaste_2025-10-05_05-19-26.png)
 
-![alt text](media/Snipaste_2025-10-05_05-19-53.png)
+![alt text](../media/Snipaste_2025-10-05_05-19-53.png)
 
-![alt text](media/Snipaste_2025-10-05_05-20-55.png)
+![alt text](../media/Snipaste_2025-10-05_05-20-55.png)
 
 
 

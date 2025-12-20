@@ -155,30 +155,30 @@ pip install streamlit requests
 3.  **开始提问:** 处理完成后，你可以在底部的聊天框中输入问题，或点击示例问题按钮，与你的专属知识库进行对话。
 
 
-![alt text](media/Snipaste_2025-09-23_14-13-26.png)
+![alt text](../media/Snipaste_2025-09-23_14-13-26.png)
 
-![alt text](media/Snipaste_2025-09-23_14-14-12.png)
-
-
-![alt text](media/Snipaste_2025-09-23_14-14-39.png)
-
-![alt text](media/Snipaste_2025-09-23_14-14-44.png)
-
-![alt text](media/Snipaste_2025-09-23_14-14-53.png)
+![alt text](../media/Snipaste_2025-09-23_14-14-12.png)
 
 
-![alt text](media/Snipaste_2025-09-23_14-15-01.png)
+![alt text](../media/Snipaste_2025-09-23_14-14-39.png)
 
-![alt text](media/Snipaste_2025-09-23_14-16-31.png)
+![alt text](../media/Snipaste_2025-09-23_14-14-44.png)
 
-![alt text](media/Snipaste_2025-09-23_15-40-57.png)
-
-![alt text](media/Snipaste_2025-09-23_15-41-30.png)
+![alt text](../media/Snipaste_2025-09-23_14-14-53.png)
 
 
-![alt text](media/Snipaste_2025-09-23_15-42-13.png)
+![alt text](../media/Snipaste_2025-09-23_14-15-01.png)
 
-![alt text](media/Snipaste_2025-09-23_15-44-38.png)
+![alt text](../media/Snipaste_2025-09-23_14-16-31.png)
+
+![alt text](../media/Snipaste_2025-09-23_15-40-57.png)
+
+![alt text](../media/Snipaste_2025-09-23_15-41-30.png)
+
+
+![alt text](../media/Snipaste_2025-09-23_15-42-13.png)
+
+![alt text](../media/Snipaste_2025-09-23_15-44-38.png)
 
 
 

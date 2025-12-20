@@ -1,5 +1,5 @@
 ---
-typora-copy-images-to: media
+typora-copy-images-to: ../media
 ---
 
 
@@ -98,9 +98,9 @@ pip install streamlit langchain langchain-community langchain-google-genai  beau
 5.  **聊天历史：**
     应用主界面会显示用户和机器人的对话历史。
 
-![Snipaste_2025-07-17_02-38-26](media/Snipaste_2025-07-17_02-38-26.png)
+![Snipaste_2025-07-17_02-38-26](../media/Snipaste_2025-07-17_02-38-26.png)
 
-![Snipaste_2025-07-17_02-37-33](media/Snipaste_2025-07-17_02-37-33.png)
+![Snipaste_2025-07-17_02-37-33](../media/Snipaste_2025-07-17_02-37-33.png)
 
 
 

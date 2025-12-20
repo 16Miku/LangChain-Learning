@@ -292,16 +292,16 @@ streamlit run app.py
 
 
     
-    ![alt text](media/Snipaste_2025-11-23_02-26-15.png)
+    ![alt text](../media/Snipaste_2025-11-23_02-26-15.png)
 
 
     *   **示例1: 基于上传文档的 RAG 查询**
 
-    ![alt text](media/Snipaste_2025-11-23_01-57-21.png)
+    ![alt text](../media/Snipaste_2025-11-23_01-57-21.png)
 
     在左侧栏上传pdf文件。
 
-    ![alt text](media/Snipaste_2025-11-23_02-10-20.png)
+    ![alt text](../media/Snipaste_2025-11-23_02-10-20.png)
 
 
 
@@ -309,17 +309,17 @@ streamlit run app.py
 
     *   **示例2: 使用网页搜索和分析**
 
-    ![alt text](media/Snipaste_2025-11-23_02-29-59.png)
+    ![alt text](../media/Snipaste_2025-11-23_02-29-59.png)
 
     Agent 会依次调用 `search_engine` -> `web_data_linkedin_person_profile` -> `format_linkedin_profile` 等工具，你可以在展开的 "Thinking" 区域看到每一步的调用和结果。
 
-    ![alt text](media/Snipaste_2025-11-23_02-45-13.png)
+    ![alt text](../media/Snipaste_2025-11-23_02-45-13.png)
 
 
     *   **示例3: 搜索并爬取论文**
     
 
-    ![alt text](media/Snipaste_2025-11-23_02-41-17.png)
+    ![alt text](../media/Snipaste_2025-11-23_02-41-17.png)
 
 
 ---

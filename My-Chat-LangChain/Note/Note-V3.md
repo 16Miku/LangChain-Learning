@@ -110,15 +110,15 @@ pip install fastapi "uvicorn[standard]" langchain langchain-community langchain-
 1.  在一个 PowerShell 窗口中启动**后端服务** (`uvicorn main:app --reload`)。
 2.  在另一个 PowerShell 窗口中启动**前端应用** (`streamlit run app.py`)。
 
-![alt text](media/Snipaste_2025-09-26_15-27-51.png)
+![alt text](../media/Snipaste_2025-09-26_15-27-51.png)
 
 
-![alt text](media/Snipaste_2025-09-26_16-20-11.png)
+![alt text](../media/Snipaste_2025-09-26_16-20-11.png)
 
-![alt text](media/Snipaste_2025-09-26_16-20-35.png)
+![alt text](../media/Snipaste_2025-09-26_16-20-35.png)
 
 
-![alt text](media/Snipaste_2025-09-26_16-20-42.png)
+![alt text](../media/Snipaste_2025-09-26_16-20-42.png)
 
 
 #### **6. v2.0 -> v3.0 升级之旅：问题、分析与解决方案**

@@ -200,10 +200,10 @@ streamlit run app.py
 ## 6. 运行演示
 
 ### 搜索 Asuka 演示
-![搜索 斋藤飞鸟 演示](media/search_asuka.gif)
+![搜索 斋藤飞鸟 演示](../media/search_asuka.gif)
 
 ### 搜索 Teresa 演示
-![搜索 池田瑛纱 演示](media/search_teresa.gif)
+![搜索 池田瑛纱 演示](../media/search_teresa.gif)
 
 
 

@@ -202,7 +202,7 @@ streamlit run app.py
 
 - 上传本地PDF文件作为知识库：
 
-![alt text](media/Snipaste_2025-11-21_01-05-51.png)
+![alt text](../media/Snipaste_2025-11-21_01-05-51.png)
 
 
 
@@ -211,7 +211,7 @@ streamlit run app.py
 
 - 调用BrightData的专业爬虫工具：
 
-![alt text](media/Snipaste_2025-11-21_01-07-41.png)
+![alt text](../media/Snipaste_2025-11-21_01-07-41.png)
 
 
 
@@ -221,20 +221,20 @@ streamlit run app.py
 
 
 
-![alt text](media/Snipaste_2025-11-21_01-28-27.png)
+![alt text](../media/Snipaste_2025-11-21_01-28-27.png)
 
 
 
 
 - 调用PaperSearch的专业论文搜索和读取工具：
 
-![alt text](media/Snipaste_2025-11-21_01-30-36.png)
+![alt text](../media/Snipaste_2025-11-21_01-30-36.png)
 
 
 
 - 调用自定义Tool：
 
-![alt text](media/Snipaste_2025-11-21_01-24-01.png)
+![alt text](../media/Snipaste_2025-11-21_01-24-01.png)
 
 
 
